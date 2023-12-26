@@ -1,9 +1,19 @@
-use crate::expression::{Expression, ExpressionToken};
-use crate::operators::{Priority, OPERATORS};
-use crate::{ComputedResult, ParsingError};
+use crate::constants::CONSTANTS;
+use crate::expression::{Expression, ExpressionToken, NumericResult};
+use crate::functions::{FUNCTION_NAMES, FUNCTIONS};
+use crate::generators::GENERATORS;
+use crate::operators::{OPERATORS, Priority};
+use crate::ParsingError;
 
 pub(super) fn parse(ex: &str) -> anyhow::Result<Expression> {
     let mut expression = Expression::new();
+
+    let mut ex = ex.to_owned();
+
+    // replace generator fce by name only
+    for (name, g) in GENERATORS.iter() {
+        ex = ex.replace(g.fce_name, name);
+    }
 
     if ex.is_empty() {
         return Err(ParsingError::EmptyExpression.into());
@@ -52,6 +62,16 @@ pub(super) fn parse(ex: &str) -> anyhow::Result<Expression> {
         }
 
         if c == '(' {
+            // prev token:
+            if !token.is_empty() {
+                let ex = parse_token(token.as_str());
+                let Ok(ex) = ex else {
+                    return Err(ex.err().unwrap());
+                };
+                expression.push(ex);
+                token.clear()
+            }
+
             // read to next matching parentheses
             let mut count = 1;
             let mut ex = String::new();
@@ -65,12 +85,28 @@ pub(super) fn parse(ex: &str) -> anyhow::Result<Expression> {
                     ')' => {
                         count -= 1;
                         if count == 0 {
-                            // we have the full group
+                            // we have the full inner group
                             if !ex.is_empty() {
-                                let Ok(ex) = parse(ex.as_str()) else {
-                                    return Err(ParsingError::InvalidExpression.into());
-                                };
-                                expression.push(ExpressionToken::Expression(ex));
+                                // list of parameters
+                                if ex.contains(',') {
+                                    let mut list = Vec::new();
+                                    // list of arguments
+                                    for ex in ex.split(',') {
+                                        if ex.is_empty() {
+                                            continue;
+                                        }
+                                        let Ok(ex) = parse(ex) else {
+                                            return Err(ParsingError::InvalidExpression.into());
+                                        };
+                                        list.push(ex);
+                                    }
+                                    expression.push(ExpressionToken::List(list));
+                                } else {
+                                    let Ok(ex) = parse(ex.as_str()) else {
+                                        return Err(ParsingError::InvalidExpression.into());
+                                    };
+                                    expression.push(ExpressionToken::Expression(ex));
+                                }
                             }
                             break;
                         } else {
@@ -132,7 +168,7 @@ pub(super) fn parse(ex: &str) -> anyhow::Result<Expression> {
                     }
                 }
             }
-            ExpressionToken::ComputedResult(_) => normalized.push(e),
+            ExpressionToken::Numeric(_) => normalized.push(e),
             ExpressionToken::Expression(e2) => {
                 if e2.tokens.len() == 1 {
                     // unwrap
@@ -142,12 +178,64 @@ pub(super) fn parse(ex: &str) -> anyhow::Result<Expression> {
                     normalized.push(e);
                 }
             }
+            ExpressionToken::Function(_) => normalized.push(e),
+            ExpressionToken::Generator(_) => normalized.push(e),
+            ExpressionToken::List(_) => normalized.push(e),
         }
     }
 
     expression = normalized;
 
-    // prioritize
+    // prioritize functions
+    {
+        let mut prioritized = Expression::new();
+        let mut buff2 = Vec::new();
+        let mut tokens = expression.tokens.into_iter();
+
+        while let Some(e) = tokens.next() {
+            buff2.push(e.clone());
+
+            if buff2.len() == 2 {
+                let mut priority_group = false;
+                // check if first element is a function
+                if let ExpressionToken::Function(_) = buff2[0] {
+                    priority_group = true
+                }
+
+                if priority_group {
+                    if let ExpressionToken::Operator(_) = buff2[1] {
+                        // another expression follows
+                        // floor - 1.9
+                        let Some(next) = tokens.next() else {
+                            return Err(ParsingError::InvalidExpression.into());
+                        };
+
+                        buff2 = vec![ExpressionToken::Expression(Expression::from_tokens(vec![
+                            buff2[0].clone(),
+                            ExpressionToken::Expression(Expression::from_tokens(vec![
+                                buff2[1].clone(),
+                                next,
+                            ])),
+                        ]))];
+                    } else {
+                        buff2 = vec![ExpressionToken::Expression(Expression::from_tokens(buff2))];
+                    }
+                } else {
+                    prioritized.push(buff2[0].clone());
+                    // shift buff3 - remove head
+                    buff2 = vec![buff2[1].clone()];
+                }
+            }
+        }
+        // append rest from buff2
+        for t in buff2 {
+            prioritized.push(t);
+        }
+
+        expression = prioritized;
+    }
+
+    // prioritize operands
     for priority in [Priority::Highest, Priority::High] {
         let mut prioritized = Expression::new();
         let mut buff3 = Vec::new();
@@ -200,23 +288,41 @@ fn parse_token(token: &str) -> anyhow::Result<ExpressionToken> {
 
     // numeric expression
     if let Ok(n) = token.parse::<f64>() {
-        return Ok(ExpressionToken::ComputedResult(ComputedResult::Numeric(
+        return Ok(ExpressionToken::Numeric(NumericResult::new(
             n, None, // TODO: units
         )));
     }
 
-    // check variable name
-    // must start with a alpha character
-    if !token.chars().next().unwrap().is_ascii_alphabetic() {
-        return Err(ParsingError::InvalidVariableName(token.to_owned()).into());
+    // function
+    if let Some(f) = FUNCTIONS.get(token) {
+        return Ok(ExpressionToken::Function(f));
     }
 
-    // alpha numeric variable names only
-    if !token.chars().all(|c| c.is_ascii_alphanumeric()) {
-        return Err(ParsingError::InvalidVariableName(token.to_owned()).into());
+    if let Some(n) = CONSTANTS.get(token) {
+        return Ok(ExpressionToken::Numeric(NumericResult::new(*n, None)));
     }
 
-    Ok(ExpressionToken::ComputedResult(ComputedResult::Variable(
-        token.to_owned(),
-    )))
+    if let Some(g) = GENERATORS.get(token) {
+        return Ok(ExpressionToken::Generator(g));
+    }
+
+    // check if token does not start with a function name
+    for fce_name in FUNCTION_NAMES.iter() {
+        if token.starts_with(fce_name) {
+            let Some(fce) = FUNCTIONS.get(fce_name) else {
+                return Err(ParsingError::InvalidExpression.into());
+            };
+
+            let Ok(ex) = parse_token(token.strip_prefix(fce_name).unwrap()) else {
+                return Err(ParsingError::InvalidExpression.into());
+            };
+
+            return Ok(ExpressionToken::Expression(Expression::from_tokens(vec![
+                ExpressionToken::Function(fce),
+                ex,
+            ])));
+        }
+    }
+
+    Err(ParsingError::InvalidExpressionToken(token.to_owned()).into())
 }

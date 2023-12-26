@@ -1,4 +1,4 @@
-use pepino::Computer;
+use pepino::Calc;
 
 #[test]
 fn display() {
@@ -16,10 +16,17 @@ fn display() {
         ("9 + 3 / 3 - 3 - 3 * 1 / -3", "9+(3/3)-3-((3*1)/(-3))"),
         ("3 * 5 ^ 2", "3*(5^2)"),
         ("27 + 3 / 3 + 2 ^ 2 + 3 * 5 + 1", "27+(3/3)+(2^2)+(3*5)+1"),
+        ("sqrt(25)+sqr(5)", "(sqrt25)+(sqr5)"),
+        ("sqrt25+sqr5", "(sqrt25)+(sqr5)"),
+        ("sqrt round 4.4 / 2", "(sqrt(round4.4))/2"),
+        ("ceil -1.9", "ceil(-1.9)"),
+        ("random() * 10000 * 5", "(random()*10000)*5"),
+        ("min(2,5)", "min(2,5)"),
+        ("min(2,5 * 2 * 3)", "min(2,(5*2)*3)"),
     ];
 
     for test in tests {
-        let mut computer = Computer::default();
+        let mut computer = Calc::default();
         computer.compute(test.0);
         let statement = computer.last_statement().unwrap();
         let expression = statement.expression.as_ref().unwrap().clone();

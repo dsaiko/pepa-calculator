@@ -1,34 +1,56 @@
-use crate::{ComputedResult, ParsingError};
-use crate::expression::{Expression, ExpressionToken};
+use crate::expression::{Expression, ExpressionToken, NumericResult};
+use crate::ParsingError;
 
-pub(super) fn compute(ex: &Expression) -> anyhow::Result<ComputedResult> {
+pub(super) fn compute(ex: &Expression) -> anyhow::Result<NumericResult> {
     let mut operands = Vec::new();
-    let mut result = None;
-    let mut operation = None;
+    let mut result: Option<NumericResult> = None;
+    let mut operator = None;
+    let mut function = None;
 
     for t in ex.tokens.iter() {
         let mut invoke = false;
 
         match t {
-            ExpressionToken::Operator(o) => operation = Some(o),
-            ExpressionToken::ComputedResult(r) => {
-                operands.push(r.clone());
+            ExpressionToken::Operator(o) => operator = Some(o),
+            ExpressionToken::Function(f) => function = Some(f),
+            ExpressionToken::Numeric(n) => {
+                operands.push(*n);
                 if result.is_none() {
                     // initial result = first operand
-                    result = Some(r.clone());
+                    result = Some(*n);
                 }
 
                 invoke = true;
             }
             ExpressionToken::Expression(ex) => {
-                let Ok(r) = compute(ex) else {
+                let Ok(n) = compute(ex) else {
                     return Err(ParsingError::InvalidExpression.into());
                 };
 
-                operands.push(r.clone());
+                operands.push(n);
                 if result.is_none() {
                     // initial result = first operand
-                    result = Some(r.clone());
+                    result = Some(n);
+                }
+
+                invoke = true;
+            }
+            ExpressionToken::Generator(g) => {
+                let n = NumericResult::new((g.fce)(), None); // Unit: None
+                operands.push(n);
+                if result.is_none() {
+                    // initial result = first operand
+                    result = Some(n);
+                }
+
+                invoke = true;
+            }
+            ExpressionToken::List(list) => {
+                for ex in list {
+                    let Ok(n) = compute(ex) else {
+                        return Err(ParsingError::InvalidExpression.into());
+                    };
+                    operands.push(n);
                 }
 
                 invoke = true;
@@ -40,18 +62,28 @@ pub(super) fn compute(ex: &Expression) -> anyhow::Result<ComputedResult> {
         }
 
         // if operation is set
-        if let Some(operator) = operation {
-            let mut values = Vec::new();
-            for o in &operands {
-                match o {
-                    ComputedResult::Numeric(v, _) => values.push(*v),
-                    ComputedResult::Variable(_) => todo!(),
-                }
-            }
+        if let Some(f) = function {
+            // TODO: units
+            let r = if (f.params_validation)(operands.len()) {
+                (f.fce)(operands.iter().map(|n| n.value).collect())
+            } else {
+                return Err(ParsingError::InvalidExpression.into());
+            };
 
-            let r = match values.len() {
-                1 => (operator.unary_action)(values[0]),
-                2 => (operator.binary_action)(values[0], values[1]),
+            let n = NumericResult::new(r, None); // TODO: Unit
+            operands.clear();
+            operands.push(n);
+            result = Some(n);
+            function = None;
+            continue;
+        }
+
+        // if operation is set
+        if let Some(o) = operator {
+            // TODO: units
+            let r = match operands.len() {
+                1 => (o.unary_action)(operands[0].value),
+                2 => (o.binary_action)(operands[0].value, operands[1].value),
                 _ => return Err(ParsingError::InvalidExpression.into()),
             };
 
@@ -60,10 +92,12 @@ pub(super) fn compute(ex: &Expression) -> anyhow::Result<ComputedResult> {
                 return Err(ParsingError::InvalidExpression.into());
             };
 
-            let r = ComputedResult::Numeric(r, None); // TODO: Unit
+            let n = NumericResult::new(r, None); // TODO: Unit
             operands.clear();
-            operands.push(r.clone());
-            result = Some(r);
+            operands.push(n);
+            result = Some(n);
+            operator = None;
+            continue;
         }
     }
 

@@ -19,11 +19,13 @@ name = "pepino"
 path = "src/main.rs"
 
 [dependencies]
-anyhow = { version = "1.0.76", features = [] }
+anyhow = { version = "1.0.77", features = [] }
 once_cell = "1.19.0"
 strum = "0.25.0"
 strum_macros = "0.25.3"
 thiserror = "1.0.51"
+regex = "1.10.2"
+fastrand = "2.0.1"
 
 [package.metadata.docs.rs]
 all-features = true

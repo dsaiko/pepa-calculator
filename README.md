@@ -1,6 +1,6 @@
 # Text based calculator and unit convertor
 
-#### In Memory of my father Josef Saiko, who did love mathematics all his live.
+#### In Memory of my father Josef Saiko (1945-2019), who did love mathematics all his live.
 
 [![Build](https://github.com/dsaiko/pepino/actions/workflows/rust.yml/badge.svg)](https://github.com/dsaiko/pepino/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/dsaiko/pepino)
@@ -11,7 +11,6 @@ TODO:
 
 - variables
 - currencies
-- brackets
 - stock prices
 - at time
 - percentage
@@ -19,8 +18,7 @@ TODO:
 - cli app
 - ui app + ios + android + mac + win
 - cloud registration - lambdas
--
-    - in cli or gui?
+- in cli or gui?
 - financial
 - sheets csv ?
 - remote data sources
@@ -45,36 +43,25 @@ TODO:
 - angle
 - fyzikalni tabulky
 - nahodne cisla + rozdeleni
-- nahodne hesla
+- nahodne hesla, uuid
 - nahodna slova, vety ...
 - test to number
 - licence GPL???
 - price appl stock in czk
 - comments "//" "#"
 - 5 percent of/from 100
-- sqrt(555)
-- sqr555 sqrt555
 - 5MB + 3KB
-  round(n) - round up cutoff is .5.
-  trunc(n) - return integral part of number (1.44 -> 1.00).
-  fract(n) - return fractional part of number (1.44 -> 0.44).
-  pow(n, e) - raise n to the power of e.
-  sqrt(n) - return square root of n.
-  max(n, m) - return the larger of n and m.
-  min(n, m) - return the smaller of n and m.
-  cos(n)
-  sin(n)
-  tan(n)
-  floor(n)
-  ceil(n)
-- https://github.com/simon-whitehead/rust-yard
+- min(5 tons, 3 kg)
+  https://github.com/simon-whitehead/rust-yard
   numsolve
-  log
-  8**5
-- sin 180 sin(180)
 - {} ?
   variables: 3A 3*A 3xA
 - matrix?
 - multiline formulas?
 - factorial
-- modulo + div
+- sum, avg ...
+- (15, 16, 17) => x
+- csv => x ?
+- bash script sample to get http request value + convert
+- icon UI
+- .5 format

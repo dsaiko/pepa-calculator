@@ -1,11 +1,13 @@
 use thiserror::Error;
 
-pub use self::computer::ComputedResult;
-pub use self::computer::Computer;
+pub use self::calc::Calc;
 
+mod calc;
 mod compute;
-mod computer;
+mod constants;
 mod expression;
+mod functions;
+mod generators;
 mod operators;
 mod parser;
 mod units;
@@ -16,8 +18,8 @@ pub enum ParsingError {
     UnbalancedParenthesesError(),
     #[error("Empty expression")]
     EmptyExpression,
-    #[error("Invalid variable name: '{0}'")]
-    InvalidVariableName(String),
+    #[error("Invalid expression token: '{0}")]
+    InvalidExpressionToken(String),
     #[error("Invalid expression")]
     InvalidExpression,
     #[error("Unsupported operation")]

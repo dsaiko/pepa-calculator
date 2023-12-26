@@ -1,7 +1,7 @@
-use pepino::Computer;
+use pepino::Calc;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut computer = Computer::default();
+    let mut computer = Calc::default();
 
     computer.compute(
         "\

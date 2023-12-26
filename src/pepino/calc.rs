@@ -1,44 +1,37 @@
 use std::collections::HashMap;
 
 use crate::compute::compute;
-use crate::expression::Expression;
+use crate::expression::{Expression, NumericResult};
 use crate::parser::parse;
-use crate::units::Unit;
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum ComputedResult {
-    Numeric(f64, Option<Unit>),
-    Variable(String),
-}
 
 #[derive(Debug, Clone)]
 pub struct Statement {
     pub request: String,
     pub expression: Option<Expression>,
-    pub result: Option<ComputedResult>,
+    pub result: Option<NumericResult>,
 }
 
-pub struct Computer {
+pub struct Calc {
     statements: Vec<Statement>,
-    variables: HashMap<String, ComputedResult>,
+    variables: HashMap<String, NumericResult>,
 }
 
-impl Default for Computer {
+impl Default for Calc {
     fn default() -> Self {
-        Computer::new()
+        Calc::new()
     }
 }
 
-impl Computer {
-    pub fn new() -> Computer {
-        Computer {
+impl Calc {
+    pub fn new() -> Calc {
+        Calc {
             statements: vec![],
             variables: Default::default(),
         }
     }
 
     pub fn reset(&mut self) {
-        *self = Computer::new();
+        *self = Calc::new();
     }
 
     pub fn last_statement(&self) -> Option<&Statement> {

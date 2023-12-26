@@ -17,43 +17,43 @@ pub enum Priority {
 pub struct Operator {
     pub representation: char,
     pub priority: Priority,
-    pub unary_action: fn(left: f64) -> Result<f64>,
+    pub unary_action: fn(right: f64) -> Result<f64>,
     pub binary_action: fn(left: f64, right: f64) -> Result<f64>,
 }
 
-pub(super) static OPERATORS: Lazy<HashMap<char, Operator>> = Lazy::new(|| {
+pub static OPERATORS: Lazy<HashMap<char, Operator>> = Lazy::new(|| {
     let mut operators = HashMap::new();
 
     for operator in [
         Operator {
             representation: '+',
             priority: Priority::Low,
-            unary_action: plus_unary,
-            binary_action: plus_binary,
+            unary_action: Ok,
+            binary_action: |x, y| Ok(x + y),
         },
         Operator {
             representation: '-',
             priority: Priority::Low,
-            unary_action: minus_unary,
-            binary_action: minus_binary,
+            unary_action: |x| Ok(-x),
+            binary_action: |x, y| Ok(x - y),
         },
         Operator {
             representation: '*',
             priority: Priority::High,
-            unary_action: unsupported_unary,
-            binary_action: multiply_binary,
+            unary_action: unsupported_operator,
+            binary_action: |x, y| Ok(x * y),
         },
         Operator {
             representation: '/',
             priority: Priority::High,
-            unary_action: unsupported_unary,
-            binary_action: divide_binary,
+            unary_action: unsupported_operator,
+            binary_action: |x, y| Ok(x / y),
         },
         Operator {
             representation: '^',
             priority: Priority::Highest,
-            unary_action: unsupported_unary,
-            binary_action: pow_binary,
+            unary_action: unsupported_operator,
+            binary_action: |x, y| Ok(x.powf(y)),
         },
     ] {
         operators.insert(operator.representation, operator);
@@ -62,34 +62,6 @@ pub(super) static OPERATORS: Lazy<HashMap<char, Operator>> = Lazy::new(|| {
     operators
 });
 
-fn unsupported_unary(_: f64) -> Result<f64> {
+fn unsupported_operator(_: f64) -> Result<f64> {
     Err(ParsingError::UnsupportedOperation.into())
-}
-
-fn plus_unary(left: f64) -> Result<f64> {
-    Ok(left)
-}
-
-fn plus_binary(left: f64, right: f64) -> Result<f64> {
-    Ok(left + right)
-}
-
-fn minus_unary(left: f64) -> Result<f64> {
-    Ok(-left)
-}
-
-fn minus_binary(left: f64, right: f64) -> Result<f64> {
-    Ok(left - right)
-}
-
-fn multiply_binary(left: f64, right: f64) -> Result<f64> {
-    Ok(left * right)
-}
-
-fn divide_binary(left: f64, right: f64) -> Result<f64> {
-    Ok(left / right)
-}
-
-fn pow_binary(left: f64, right: f64) -> Result<f64> {
-    Ok(left.powf(right))
 }

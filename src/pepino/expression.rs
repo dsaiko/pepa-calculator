@@ -1,12 +1,29 @@
 use std::fmt::{Display, Formatter};
 
+use crate::functions::Function;
+use crate::generators::Generator;
 use crate::operators::Operator;
-use crate::ComputedResult;
+use crate::units::Unit;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct NumericResult {
+    pub value: f64,
+    pub unit: Option<Unit>,
+}
+
+impl NumericResult {
+    pub fn new(value: f64, unit: Option<Unit>) -> NumericResult {
+        NumericResult { value, unit }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum ExpressionToken {
     Operator(&'static Operator),
-    ComputedResult(ComputedResult),
+    Function(&'static Function),
+    Generator(&'static Generator),
+    Numeric(NumericResult),
+    List(Vec<Expression>),
     Expression(Expression),
 }
 
@@ -40,14 +57,25 @@ impl Display for Expression {
         for token in self.tokens.iter() {
             match token {
                 ExpressionToken::Operator(o) => write!(f, "{}", o.representation)?,
-                ExpressionToken::ComputedResult(r) => match r {
-                    ComputedResult::Numeric(n, u) => match u {
-                        None => write!(f, "{}", n)?,
-                        Some(u) => write!(f, "{}{}", n, u)?,
-                    },
-                    ComputedResult::Variable(x) => write!(f, "{}", x)?,
+                ExpressionToken::Numeric(n) => match n.unit {
+                    None => write!(f, "{}", n.value)?,
+                    Some(u) => write!(f, "{}{}", n.value, u)?,
                 },
                 ExpressionToken::Expression(e) => write!(f, "({})", e)?,
+                ExpressionToken::Function(fce) => write!(f, "{}", fce.representation)?,
+                ExpressionToken::Generator(g) => write!(f, "{}", g.fce_name)?,
+                ExpressionToken::List(list) => {
+                    write!(f, "(")?;
+                    let mut first = true;
+                    for e in list {
+                        if !first {
+                            write!(f, ",")?;
+                        }
+                        write!(f, "{}", e)?;
+                        first = false;
+                    }
+                    write!(f, ")")?;
+                }
             }
         }
 
