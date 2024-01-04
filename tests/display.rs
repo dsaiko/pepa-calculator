@@ -27,8 +27,7 @@ fn display() {
 
     for test in tests {
         let mut computer = Calc::default();
-        computer.compute(test.0);
-        let statement = computer.last_statement().unwrap();
+        let statement = computer.compute(test.0).unwrap();
         let expression = statement.expression.as_ref().unwrap().clone();
         let actual = expression.to_string();
         if actual != test.1 {

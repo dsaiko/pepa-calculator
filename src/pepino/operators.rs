@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
-use anyhow::Result;
 use once_cell::sync::Lazy;
 use strum_macros::Display;
 
-use crate::ParsingError;
+use crate::ComputeError;
 
 #[derive(Debug, Clone, Display, Eq, PartialEq)]
 pub enum Priority {
@@ -17,8 +16,8 @@ pub enum Priority {
 pub struct Operator {
     pub representation: char,
     pub priority: Priority,
-    pub unary_action: fn(right: f64) -> Result<f64>,
-    pub binary_action: fn(left: f64, right: f64) -> Result<f64>,
+    pub unary_action: fn(right: f64) -> Result<f64, ComputeError>,
+    pub binary_action: fn(left: f64, right: f64) -> Result<f64, ComputeError>,
 }
 
 pub static OPERATORS: Lazy<HashMap<char, Operator>> = Lazy::new(|| {
@@ -40,19 +39,19 @@ pub static OPERATORS: Lazy<HashMap<char, Operator>> = Lazy::new(|| {
         Operator {
             representation: '*',
             priority: Priority::High,
-            unary_action: unsupported_operator,
+            unary_action: unsupported_unary_operator,
             binary_action: |x, y| Ok(x * y),
         },
         Operator {
             representation: '/',
             priority: Priority::High,
-            unary_action: unsupported_operator,
+            unary_action: unsupported_unary_operator,
             binary_action: |x, y| Ok(x / y),
         },
         Operator {
             representation: '^',
             priority: Priority::Highest,
-            unary_action: unsupported_operator,
+            unary_action: unsupported_unary_operator,
             binary_action: |x, y| Ok(x.powf(y)),
         },
     ] {
@@ -62,6 +61,6 @@ pub static OPERATORS: Lazy<HashMap<char, Operator>> = Lazy::new(|| {
     operators
 });
 
-fn unsupported_operator(_: f64) -> Result<f64> {
-    Err(ParsingError::UnsupportedOperation.into())
+fn unsupported_unary_operator(_: f64) -> Result<f64, ComputeError> {
+    Err(ComputeError::UnsupportedUnaryOperator)
 }

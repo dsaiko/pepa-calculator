@@ -3,12 +3,14 @@ use std::collections::HashMap;
 use crate::compute::compute;
 use crate::expression::{Expression, NumericResult};
 use crate::parser::parse;
+use crate::ComputeError::InvalidExpression;
+use crate::{ComputeError, ParserError};
 
 #[derive(Debug, Clone)]
 pub struct Statement {
     pub request: String,
-    pub expression: Option<Expression>,
-    pub result: Option<NumericResult>,
+    pub expression: Result<Expression, ParserError>,
+    pub result: Result<NumericResult, ComputeError>,
 }
 
 pub struct Calc {
@@ -34,11 +36,9 @@ impl Calc {
         *self = Calc::new();
     }
 
-    pub fn last_statement(&self) -> Option<&Statement> {
-        self.statements.last()
-    }
+    pub fn compute(&mut self, statement: &str) -> Option<Statement> {
+        let mut last_statement = None;
 
-    pub fn compute(&mut self, statement: &str) {
         for line in statement
             .lines()
             .map(|line| line.trim())
@@ -47,18 +47,29 @@ impl Calc {
             let compacted_line = line.split_whitespace().collect::<Vec<_>>().join("");
 
             let expression = parse(compacted_line.as_str());
+            let Ok(expression) = expression else {
+                let statement = Statement {
+                    request: line.to_owned(),
+                    expression,
+                    result: Err(InvalidExpression(line.to_owned())),
+                };
 
-            let result = if let Ok(expression) = &expression {
-                compute(expression).ok()
-            } else {
-                None
+                last_statement = Some(statement.clone());
+                self.statements.push(statement);
+                continue;
             };
 
-            self.statements.push(Statement {
+            let result = compute(&expression);
+
+            let statement = Statement {
                 request: line.to_owned(),
-                expression: expression.ok(),
+                expression: Ok(expression),
                 result,
-            })
+            };
+            last_statement = Some(statement.clone());
+            self.statements.push(statement);
         }
+
+        last_statement
     }
 }

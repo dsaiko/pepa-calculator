@@ -1,11 +1,11 @@
 use crate::constants::CONSTANTS;
 use crate::expression::{Expression, ExpressionToken, NumericResult};
-use crate::functions::{FUNCTION_NAMES, FUNCTIONS};
+use crate::functions::{FUNCTIONS, FUNCTION_NAMES};
 use crate::generators::GENERATORS;
-use crate::operators::{OPERATORS, Priority};
-use crate::ParsingError;
+use crate::operators::{Priority, OPERATORS};
+use crate::ParserError;
 
-pub(super) fn parse(ex: &str) -> anyhow::Result<Expression> {
+pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
     let mut expression = Expression::new();
 
     let mut ex = ex.to_owned();
@@ -16,7 +16,7 @@ pub(super) fn parse(ex: &str) -> anyhow::Result<Expression> {
     }
 
     if ex.is_empty() {
-        return Err(ParsingError::EmptyExpression.into());
+        return Err(ParserError::EmptyExpression);
     }
 
     let mut ex = ex.to_owned();
@@ -58,7 +58,7 @@ pub(super) fn parse(ex: &str) -> anyhow::Result<Expression> {
         // process parentheses
         if c == ')' {
             // can not start with close
-            return Err(ParsingError::UnbalancedParenthesesError().into());
+            return Err(ParserError::UnbalancedParentheses(ex.to_owned()));
         }
 
         if c == '(' {
@@ -95,15 +95,17 @@ pub(super) fn parse(ex: &str) -> anyhow::Result<Expression> {
                                         if ex.is_empty() {
                                             continue;
                                         }
-                                        let Ok(ex) = parse(ex) else {
-                                            return Err(ParsingError::InvalidExpression.into());
+                                        let ex = parse(ex);
+                                        let Ok(ex) = ex else {
+                                            return Err(ex.err().unwrap());
                                         };
                                         list.push(ex);
                                     }
                                     expression.push(ExpressionToken::List(list));
                                 } else {
-                                    let Ok(ex) = parse(ex.as_str()) else {
-                                        return Err(ParsingError::InvalidExpression.into());
+                                    let ex = parse(ex.as_str());
+                                    let Ok(ex) = ex else {
+                                        return Err(ex.err().unwrap());
                                     };
                                     expression.push(ExpressionToken::Expression(ex));
                                 }
@@ -118,7 +120,7 @@ pub(super) fn parse(ex: &str) -> anyhow::Result<Expression> {
             }
 
             if count != 0 {
-                return Err(ParsingError::UnbalancedParenthesesError().into());
+                return Err(ParserError::UnbalancedParentheses(ex.to_owned()));
             }
             continue;
         }
@@ -207,7 +209,7 @@ pub(super) fn parse(ex: &str) -> anyhow::Result<Expression> {
                         // another expression follows
                         // floor - 1.9
                         let Some(next) = tokens.next() else {
-                            return Err(ParsingError::InvalidExpression.into());
+                            return Err(ParserError::ExpressionEndsWithOperator(ex));
                         };
 
                         buff2 = vec![ExpressionToken::Expression(Expression::from_tokens(vec![
@@ -278,13 +280,10 @@ pub(super) fn parse(ex: &str) -> anyhow::Result<Expression> {
     Ok(expression)
 }
 
-fn parse_token(token: &str) -> anyhow::Result<ExpressionToken> {
+fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
     if token.is_empty() {
-        return Err(ParsingError::EmptyExpression.into());
+        return Err(ParserError::EmptyToken);
     }
-
-    // TODO: parse functions
-    // TODO: parse numeric formats
 
     // numeric expression
     if let Ok(n) = token.parse::<f64>() {
@@ -310,11 +309,11 @@ fn parse_token(token: &str) -> anyhow::Result<ExpressionToken> {
     for fce_name in FUNCTION_NAMES.iter() {
         if token.starts_with(fce_name) {
             let Some(fce) = FUNCTIONS.get(fce_name) else {
-                return Err(ParsingError::InvalidExpression.into());
+                return Err(ParserError::InvalidFunctionName((*fce_name).to_owned()));
             };
 
             let Ok(ex) = parse_token(token.strip_prefix(fce_name).unwrap()) else {
-                return Err(ParsingError::InvalidExpression.into());
+                return Err(ParserError::InvalidToken(token.to_owned()));
             };
 
             return Ok(ExpressionToken::Expression(Expression::from_tokens(vec![
@@ -324,5 +323,5 @@ fn parse_token(token: &str) -> anyhow::Result<ExpressionToken> {
         }
     }
 
-    Err(ParsingError::InvalidExpressionToken(token.to_owned()).into())
+    Err(ParserError::InvalidToken(token.to_owned()))
 }

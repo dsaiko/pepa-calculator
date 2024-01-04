@@ -5,14 +5,13 @@ use pepino::Calc;
 fn test_operations(tests: Vec<(&str, f64)>) {
     for test in tests {
         let mut computer = Calc::default();
-        computer.compute(test.0);
-        let statement = computer.last_statement().unwrap();
+        let statement = computer.compute(test.0).unwrap();
 
         match statement.result {
-            None => {
-                panic!("{:?}: No result", test.0);
+            Err(e) => {
+                panic!("Error in '{:?}': {:?}", test.0, e);
             }
-            Some(n) => {
+            Ok(n) => {
                 // round v
                 let v = (n.value * 10.0).round() / 10.0;
                 if v != test.1 {
@@ -26,9 +25,8 @@ fn test_operations(tests: Vec<(&str, f64)>) {
 fn test_errors(tests: Vec<&str>) {
     for test in tests {
         let mut computer = Calc::default();
-        computer.compute(test);
-        let statement = computer.last_statement().unwrap();
-        if let Some(result) = &statement.result {
+        let statement = computer.compute(test).unwrap();
+        if let Ok(result) = &statement.result {
             panic!("{:?} = {:?} expected to yield no result.", test, result)
         }
     }
@@ -223,14 +221,13 @@ fn random() {
     let mut numbers = HashSet::new();
     for _ in 0..10 {
         let mut computer = Calc::default();
-        computer.compute("trunc(random() * 100000)");
-        let statement = computer.last_statement().unwrap();
+        let statement = computer.compute("trunc(random() * 100000)").unwrap();
 
         match statement.result {
-            None => {
-                panic!("No result");
+            Err(e) => {
+                panic!("Error: {:?}", e);
             }
-            Some(n) => {
+            Ok(n) => {
                 numbers.insert(n.value as u32);
             }
         }

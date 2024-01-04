@@ -1,7 +1,7 @@
 use crate::expression::{Expression, ExpressionToken, NumericResult};
-use crate::ParsingError;
+use crate::ComputeError;
 
-pub(super) fn compute(ex: &Expression) -> anyhow::Result<NumericResult> {
+pub(super) fn compute(ex: &Expression) -> Result<NumericResult, ComputeError> {
     let mut operands = Vec::new();
     let mut result: Option<NumericResult> = None;
     let mut operator = None;
@@ -23,8 +23,9 @@ pub(super) fn compute(ex: &Expression) -> anyhow::Result<NumericResult> {
                 invoke = true;
             }
             ExpressionToken::Expression(ex) => {
-                let Ok(n) = compute(ex) else {
-                    return Err(ParsingError::InvalidExpression.into());
+                let ex = compute(ex);
+                let Ok(n) = ex else {
+                    return Err(ex.err().unwrap());
                 };
 
                 operands.push(n);
@@ -47,8 +48,9 @@ pub(super) fn compute(ex: &Expression) -> anyhow::Result<NumericResult> {
             }
             ExpressionToken::List(list) => {
                 for ex in list {
-                    let Ok(n) = compute(ex) else {
-                        return Err(ParsingError::InvalidExpression.into());
+                    let ex = compute(ex);
+                    let Ok(n) = ex else {
+                        return Err(ex.err().unwrap());
                     };
                     operands.push(n);
                 }
@@ -67,7 +69,10 @@ pub(super) fn compute(ex: &Expression) -> anyhow::Result<NumericResult> {
             let r = if (f.params_validation)(operands.len()) {
                 (f.fce)(operands.iter().map(|n| n.value).collect())
             } else {
-                return Err(ParsingError::InvalidExpression.into());
+                return Err(ComputeError::InvalidNumberOfParametersForFunction(
+                    f.representation.to_owned(),
+                    operands.len(),
+                ));
             };
 
             let n = NumericResult::new(r, None); // TODO: Unit
@@ -84,12 +89,17 @@ pub(super) fn compute(ex: &Expression) -> anyhow::Result<NumericResult> {
             let r = match operands.len() {
                 1 => (o.unary_action)(operands[0].value),
                 2 => (o.binary_action)(operands[0].value, operands[1].value),
-                _ => return Err(ParsingError::InvalidExpression.into()),
+                x => {
+                    return Err(ComputeError::InvalidNumberOfParametersForOperator(
+                        o.representation,
+                        x,
+                    ));
+                }
             };
 
             let Ok(r) = r else {
                 // operator has returned None - not supported operation
-                return Err(ParsingError::InvalidExpression.into());
+                return Err(r.err().unwrap());
             };
 
             let n = NumericResult::new(r, None); // TODO: Unit
@@ -101,5 +111,5 @@ pub(super) fn compute(ex: &Expression) -> anyhow::Result<NumericResult> {
         }
     }
 
-    result.ok_or(ParsingError::InvalidExpression.into())
+    result.ok_or(ComputeError::InvalidExpression(ex.to_string()))
 }
