@@ -5,10 +5,12 @@ use once_cell::sync::Lazy;
 use strum::IntoEnumIterator;
 
 use crate::units_temperature::TemperatureUnit;
+use crate::units_time::TimeUnit;
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq)]
 pub enum Unit {
     Temperature(TemperatureUnit),
+    Time(TimeUnit),
 }
 
 static UNITS_ABBREVIATIONS: Lazy<HashMap<String, Unit>> = Lazy::new(|| {
@@ -17,7 +19,14 @@ static UNITS_ABBREVIATIONS: Lazy<HashMap<String, Unit>> = Lazy::new(|| {
     for t in TemperatureUnit::iter() {
         let abb = t.abbreviations();
         let unit = Unit::Temperature(t);
+        for abbreviation in abb {
+            abbreviations.insert(abbreviation.to_lowercase(), unit);
+        }
+    }
 
+    for t in TimeUnit::iter() {
+        let abb = t.abbreviations();
+        let unit = Unit::Time(t);
         for abbreviation in abb {
             abbreviations.insert(abbreviation.to_lowercase(), unit);
         }
@@ -35,6 +44,11 @@ impl Unit {
         match self {
             Unit::Temperature(from) => match to {
                 Unit::Temperature(to) => Some(to.from_reference_unit(from.to_reference_unit(v))),
+                _ => None,
+            },
+            Unit::Time(from) => match to {
+                Unit::Time(to) => Some(to.from_reference_unit(from.to_reference_unit(v))),
+                _ => None,
             },
         }
     }
@@ -47,6 +61,7 @@ impl Display for Unit {
             "{}",
             match self {
                 Unit::Temperature(t) => t.to_string(),
+                Unit::Time(t) => t.to_string(),
             }
         )
     }

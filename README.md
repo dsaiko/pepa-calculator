@@ -76,4 +76,5 @@ TODO:
 - km * m / hours
 - disable multiplication on units???
 - f (x, y) = x +y ; f(5,4)...
-- pow(5km, 4km)
+- pow(5km, 4km)??
+- km * km -> ha???

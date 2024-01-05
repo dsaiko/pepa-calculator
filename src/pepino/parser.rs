@@ -2,7 +2,7 @@ use crate::constants::CONSTANTS;
 use crate::expression::{Expression, ExpressionToken, NumericResult};
 use crate::functions::{Function, FUNCTIONS, FUNCTION_NAMES};
 use crate::generators::GENERATORS;
-use crate::operators::{Priority, OPERATORS};
+use crate::operators::{Priority, CONVERSION_CHARACTER, OPERATORS};
 use crate::utils::split_string_by_comma;
 use crate::{ParserError, Unit};
 
@@ -167,6 +167,7 @@ pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
             ExpressionToken::Function(_) => normalized.push(e),
             ExpressionToken::Generator(_) => normalized.push(e),
             ExpressionToken::List(_) => normalized.push(e),
+            ExpressionToken::ConversionChain(_) => normalized.push(e),
         }
     }
 
@@ -190,9 +191,10 @@ pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
                             ExpressionToken::Operator(_) => {}
                             ExpressionToken::Function(_) => priority_group = true,
                             ExpressionToken::Generator(_) => priority_group = true,
-                            ExpressionToken::Numeric(_) => {}
+                            ExpressionToken::Numeric(_) => priority_group = true,
                             ExpressionToken::List(_) => {}
                             ExpressionToken::Expression(_) => priority_group = true,
+                            ExpressionToken::ConversionChain(_) => priority_group = true,
                         }
                     }
                 }
@@ -283,9 +285,10 @@ pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
                             ExpressionToken::Operator(_) => {}
                             ExpressionToken::Function(_) => priority_group = true,
                             ExpressionToken::Generator(_) => priority_group = true,
-                            ExpressionToken::Numeric(_) => {}
+                            ExpressionToken::Numeric(_) => priority_group = true,
                             ExpressionToken::List(_) => {}
                             ExpressionToken::Expression(_) => priority_group = true,
+                            ExpressionToken::ConversionChain(_) => priority_group = true,
                         }
                     }
                 }
@@ -420,22 +423,38 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
         }
     }
 
-    if let Some(unit) = Unit::from_string(&unit) {
-        // number must be a numeric value
-        if let Ok(n) = number.parse::<f64>() {
-            return Ok(ExpressionToken::Numeric(NumericResult::new(n, Some(*unit))));
-        };
+    let units = unit
+        .split(CONVERSION_CHARACTER)
+        .filter(|&x| !x.is_empty())
+        .map(|u| Unit::from_string(u))
+        .collect::<Vec<_>>();
 
-        // only unit, treat it as a conversion functions
-        let f = Function {
-            representation: unit.to_string(),
-            fce: |params| params[0],
-            params_validation: |count| count == 1,
-            unit: Some(*unit),
-        };
-
-        return Ok(ExpressionToken::Function(f));
+    if units.is_empty() || units.iter().any(|u| u.is_none()) {
+        return Err(ParserError::InvalidToken(token.to_owned()));
     }
 
-    Err(ParserError::InvalidToken(token.to_owned()))
+    let units = units.iter().map(|u| *u.unwrap()).collect::<Vec<_>>();
+
+    // number must be a numeric value
+    if let Ok(n) = number.parse::<f64>() {
+        let e = ExpressionToken::Expression(Expression::from_tokens(vec![
+            ExpressionToken::Numeric(NumericResult::new(n, None)),
+            ExpressionToken::ConversionChain(units),
+        ]));
+        return Ok(e);
+    };
+
+    if units.len() == 1 {
+        // only units, treat it as a conversion functions
+        let f = Function {
+            representation: format!("{}{}", CONVERSION_CHARACTER, units[0]),
+            fce: |params| params[0],
+            params_validation: |count| count == 1,
+            unit: Some(units[0]),
+        };
+
+        Ok(ExpressionToken::Function(f))
+    } else {
+        Ok(ExpressionToken::ConversionChain(units))
+    }
 }

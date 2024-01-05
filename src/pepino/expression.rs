@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 
 use crate::functions::Function;
 use crate::generators::Generator;
-use crate::operators::Operator;
+use crate::operators::{Operator, CONVERSION_CHARACTER};
 use crate::units::Unit;
 use crate::ComputeError;
 
@@ -17,9 +17,12 @@ impl NumericResult {
         NumericResult { value, unit }
     }
 
-    pub fn convert_to(self, to: Unit) -> Result<NumericResult, ComputeError> {
+    pub fn convert_to(self, to: Unit, force_unit: bool) -> Result<NumericResult, ComputeError> {
         let Some(unit) = self.unit else {
-            return Ok(self);
+            return Ok(NumericResult::new(
+                self.value,
+                if force_unit { Some(to) } else { None },
+            ));
         };
 
         if unit == to {
@@ -46,6 +49,7 @@ pub enum ExpressionToken {
     Numeric(NumericResult),
     List(Vec<Expression>),
     Expression(Expression),
+    ConversionChain(Vec<Unit>),
 }
 
 #[derive(Debug, Clone)]
@@ -100,6 +104,11 @@ impl Display for Expression {
                         first = false;
                     }
                     write!(f, ")")?;
+                }
+                ExpressionToken::ConversionChain(units) => {
+                    for unit in units {
+                        write!(f, "{}{}", CONVERSION_CHARACTER, unit)?;
+                    }
                 }
             }
         }

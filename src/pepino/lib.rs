@@ -3,6 +3,7 @@ use thiserror::Error;
 pub use self::calc::Calc;
 pub use self::units::Unit;
 pub use self::units_temperature::TemperatureUnit;
+pub use self::units_time::TimeUnit;
 
 mod calc;
 mod compute;
@@ -14,6 +15,7 @@ mod operators;
 mod parser;
 mod units;
 mod units_temperature;
+mod units_time;
 mod utils;
 #[cfg(test)]
 mod utils_test;

@@ -1,11 +1,12 @@
-use crate::{ComputeError, Unit};
 use crate::expression::{Expression, ExpressionToken, NumericResult};
+use crate::{ComputeError, Unit};
 
 pub(super) fn compute(ex: &Expression) -> Result<NumericResult, ComputeError> {
     let mut operands = Vec::new();
     let mut result: Option<NumericResult> = None;
     let mut operator = None;
     let mut function = None;
+    let mut conversions = None;
 
     for t in ex.tokens.iter() {
         let mut invoke = false;
@@ -50,6 +51,10 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericResult, ComputeError> {
 
                 invoke = true;
             }
+            ExpressionToken::ConversionChain(c) => {
+                conversions = Some(c);
+                invoke = true;
+            }
         }
 
         if !invoke {
@@ -58,7 +63,7 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericResult, ComputeError> {
 
         // if function is set
         if let Some(f) = function {
-            let (converted, unit) = convert_units(&operands, f.unit)?;
+            let (converted, unit) = convert_operands(&operands, f.unit)?;
 
             let r = if (f.params_validation)(converted.len()) {
                 (f.fce)(converted.iter().map(|n| n.value).collect())
@@ -79,7 +84,7 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericResult, ComputeError> {
 
         // if operation is set
         if let Some(o) = operator {
-            let (converted, unit) = convert_units(&operands, None)?;
+            let (converted, unit) = convert_operands(&operands, None)?;
             let r = match converted.len() {
                 1 => (o.unary_action)(converted[0].value),
                 2 => (o.binary_action)(converted[0].value, converted[1].value),
@@ -98,11 +103,29 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericResult, ComputeError> {
             operator = None;
             continue;
         }
+
+        // if operation is set
+        if let Some(units) = conversions {
+            for unit in units {
+                let mut converted = Vec::with_capacity(operands.len());
+                for operand in operands {
+                    converted.push(operand.convert_to(*unit, true)?)
+                }
+                operands = converted;
+            }
+
+            conversions = None;
+            continue;
+        }
+    }
+
+    if operands.len() == 1 {
+        result = Some(operands[0])
     }
 
     // if function is at the end - invoke it with operands
     if let Some(f) = function {
-        let (converted, unit) = convert_units(&operands, f.unit)?;
+        let (converted, unit) = convert_operands(&operands, f.unit)?;
         let r = if (f.params_validation)(converted.len()) {
             (f.fce)(converted.iter().map(|n| n.value).collect())
         } else {
@@ -117,7 +140,7 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericResult, ComputeError> {
     result.ok_or(ComputeError::InvalidExpression(ex.to_string()))
 }
 
-fn convert_units(
+fn convert_operands(
     operands: &Vec<NumericResult>,
     force_unit: Option<Unit>,
 ) -> Result<(Vec<NumericResult>, Option<Unit>), ComputeError> {
@@ -137,7 +160,7 @@ fn convert_units(
 
     let mut converted = Vec::with_capacity(operands.len());
     for operand in operands {
-        converted.push(operand.convert_to(unit)?)
+        converted.push(operand.convert_to(unit, false)?)
     }
 
     Ok((converted, Some(unit)))

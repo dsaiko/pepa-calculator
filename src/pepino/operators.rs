@@ -20,6 +20,8 @@ pub struct Operator {
     pub binary_action: fn(left: f64, right: f64) -> Result<f64, ComputeError>,
 }
 
+pub(super) const CONVERSION_CHARACTER: char = '→';
+
 pub static OPERATORS: Lazy<HashMap<char, Operator>> = Lazy::new(|| {
     let mut operators = HashMap::new();
 

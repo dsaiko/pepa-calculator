@@ -4,6 +4,7 @@ use crate::{ComputeError, ParserError};
 use crate::compute::compute;
 use crate::ComputeError::InvalidExpression;
 use crate::expression::{Expression, NumericResult};
+use crate::operators::CONVERSION_CHARACTER;
 use crate::parser::parse;
 
 #[derive(Debug, Clone)]
@@ -44,6 +45,11 @@ impl Calc {
             .map(|line| line.trim())
             .filter(|line| !line.is_empty())
         {
+            let mut line = line.to_owned();
+            for r in [" in ", " to ", " into "] {
+                line = line.replace(r, CONVERSION_CHARACTER.to_string().as_str())
+            }
+
             let compacted_line = line.split_whitespace().collect::<Vec<_>>().join("");
 
             let expression = parse(&compacted_line);
