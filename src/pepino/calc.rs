@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
+use crate::{ComputeError, ParserError};
 use crate::compute::compute;
+use crate::ComputeError::InvalidExpression;
 use crate::expression::{Expression, NumericResult};
 use crate::parser::parse;
-use crate::ComputeError::InvalidExpression;
-use crate::{ComputeError, ParserError};
 
 #[derive(Debug, Clone)]
 pub struct Statement {
@@ -46,7 +46,7 @@ impl Calc {
         {
             let compacted_line = line.split_whitespace().collect::<Vec<_>>().join("");
 
-            let expression = parse(compacted_line.as_str());
+            let expression = parse(&compacted_line);
             let Ok(expression) = expression else {
                 let statement = Statement {
                     request: line.to_owned(),

@@ -1,7 +1,7 @@
 use pepino::Calc;
 
 #[test]
-fn display() {
+fn explain() {
     let tests: Vec<(&str, &str)> = vec![
         ("-5 - -1", "-5+1"),
         ("-5 * -1", "-(5*(-1))"),
@@ -23,13 +23,24 @@ fn display() {
         ("random() * 10000 * 5", "(random()*10000)*5"),
         ("min(2,5)", "min(2,5)"),
         ("min(2,5 * 2 * 3)", "min(2,(5*2)*3)"),
+        ("55 celsius", "55°C"),
+        ("5 * 55 celsius + 3 Kelvins", "(5*55°C)+3Kelvin"),
+        ("5 * celsius 55 + 3 Kelvins", "(5*55°C)+3Kelvin"),
+        ("celsius(55)", "°C55"),
+        ("15 fahrenheits + 3 celsius", "15°F+3°C"),
+        (
+            "15 fahrenheits + 3 kelvins + 2 * 20 celsius",
+            "15°F+3Kelvin+(2*20°C)",
+        ),
+        ("10 celsius + pow(5,2) Fahrenheit", "10°C+((pow(5,2))°F)"),
+        ("(33 + 3) celsius + 15", "((33+3)°C)+15"),
     ];
 
     for test in tests {
         let mut computer = Calc::default();
         let statement = computer.compute(test.0).unwrap();
         let expression = statement.expression.as_ref().unwrap().clone();
-        let actual = expression.to_string();
+        let actual = expression.explain();
         if actual != test.1 {
             panic!("{} != {}", test.1, actual)
         }

@@ -4,6 +4,7 @@ use crate::functions::Function;
 use crate::generators::Generator;
 use crate::operators::Operator;
 use crate::units::Unit;
+use crate::ComputeError;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct NumericResult {
@@ -15,13 +16,33 @@ impl NumericResult {
     pub fn new(value: f64, unit: Option<Unit>) -> NumericResult {
         NumericResult { value, unit }
     }
+
+    pub fn convert_to(self, to: Unit) -> Result<NumericResult, ComputeError> {
+        let Some(unit) = self.unit else {
+            return Ok(self);
+        };
+
+        if unit == to {
+            return Ok(self);
+        }
+
+        let Some(v) = unit.conversion(self.value, &to) else {
+            return Err(ComputeError::UnitConversionError(
+                self.value,
+                unit.to_string(),
+                to.to_string(),
+            ));
+        };
+
+        Ok(NumericResult::new(v, Some(to)))
+    }
 }
 
 #[derive(Debug, Clone)]
 pub enum ExpressionToken {
-    Operator(&'static Operator),
-    Function(&'static Function),
-    Generator(&'static Generator),
+    Operator(Operator),
+    Function(Function),
+    Generator(Generator),
     Numeric(NumericResult),
     List(Vec<Expression>),
     Expression(Expression),
@@ -39,16 +60,20 @@ impl Default for Expression {
 }
 
 impl Expression {
-    pub fn new() -> Expression {
+    pub(super) fn new() -> Expression {
         Expression { tokens: vec![] }
     }
 
-    pub fn from_tokens(tokens: Vec<ExpressionToken>) -> Expression {
+    pub(super) fn from_tokens(tokens: Vec<ExpressionToken>) -> Expression {
         Expression { tokens }
     }
 
-    pub fn push(&mut self, token: ExpressionToken) {
+    pub(super) fn push(&mut self, token: ExpressionToken) {
         self.tokens.push(token)
+    }
+
+    pub fn explain(&self) -> String {
+        self.to_string()
     }
 }
 

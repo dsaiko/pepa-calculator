@@ -1,6 +1,8 @@
 use thiserror::Error;
 
 pub use self::calc::Calc;
+pub use self::units::Unit;
+pub use self::units_temperature::TemperatureUnit;
 
 mod calc;
 mod compute;
@@ -11,6 +13,10 @@ mod generators;
 mod operators;
 mod parser;
 mod units;
+mod units_temperature;
+mod utils;
+#[cfg(test)]
+mod utils_test;
 
 #[derive(Error, Debug, Clone)]
 pub enum ParserError {
@@ -38,4 +44,6 @@ pub enum ComputeError {
     InvalidNumberOfParametersForOperator(char, usize),
     #[error("Invalid expression: {0}")]
     InvalidExpression(String),
+    #[error("Unable to convert ${0} {1} to {2}")]
+    UnitConversionError(f64, String, String),
 }

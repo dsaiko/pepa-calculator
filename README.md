@@ -64,4 +64,16 @@ TODO:
 - csv => x ?
 - bash script sample to get http request value + convert
 - icon UI
-- .5 format
+- 55k + 5 km
+- -50 celsius + 50 kelvin
+- unknown unit
+- min(5celsius, 10, 1celsius)
+- min(5celsius, 10, 1 celsius, 100 km)
+- yards -> km -> m -> mm
+- yards in mm
+- km * km - unit???
+- km * m
+- km * m / hours
+- disable multiplication on units???
+- f (x, y) = x +y ; f(5,4)...
+- pow(5km, 4km)

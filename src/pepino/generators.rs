@@ -5,7 +5,7 @@ use once_cell::sync::Lazy;
 
 #[derive(Debug, Clone)]
 pub struct Generator {
-    pub fce_name: &'static str,
+    pub fce_name: String,
     pub fce: fn() -> f64,
 }
 
@@ -14,11 +14,11 @@ pub static GENERATORS: Lazy<HashMap<String, Generator>> = Lazy::new(|| {
 
     for generator in [
         Generator {
-            fce_name: "random()",
+            fce_name: "random()".to_owned(),
             fce: fastrand::f64,
         },
         Generator {
-            fce_name: "timestamp()",
+            fce_name: "timestamp()".to_owned(),
             fce: || {
                 SystemTime::now()
                     .duration_since(UNIX_EPOCH)
