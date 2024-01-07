@@ -1,19 +1,19 @@
 use std::fmt::{Display, Formatter};
 
+use crate::{ComputeError, Decimal};
 use crate::functions::Function;
 use crate::generators::Generator;
-use crate::operators::{Operator, CONVERSION_CHARACTER};
+use crate::operators::{CONVERSION_CHARACTER, Operator};
 use crate::units::Unit;
-use crate::ComputeError;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct NumericResult {
-    pub value: f64,
+    pub value: Decimal,
     pub unit: Option<Unit>,
 }
 
 impl NumericResult {
-    pub fn new(value: f64, unit: Option<Unit>) -> NumericResult {
+    pub fn new(value: Decimal, unit: Option<Unit>) -> NumericResult {
         NumericResult { value, unit }
     }
 

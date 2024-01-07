@@ -1,6 +1,9 @@
 use std::fmt::{Display, Formatter};
 
+use rust_decimal_macros::dec;
 use strum_macros::EnumIter;
+
+use crate::Decimal;
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter)]
 pub enum TemperatureUnit {
@@ -28,19 +31,19 @@ impl TemperatureUnit {
         }
     }
 
-    pub fn to_reference_unit(self, v: f64) -> f64 {
+    pub fn to_reference_unit(self, v: Decimal) -> Decimal {
         match self {
             TemperatureUnit::Celsius => v,
-            TemperatureUnit::Fahrenheit => (v - 32.0) * (5.0 / 9.0),
-            TemperatureUnit::Kelvin => v - 273.15,
+            TemperatureUnit::Fahrenheit => (v - dec!(32.0)) * (dec!(5.0) / dec!(9.0)),
+            TemperatureUnit::Kelvin => v - dec!(273.15),
         }
     }
 
-    pub fn from_reference_unit(self, v: f64) -> f64 {
+    pub fn from_reference_unit(self, v: Decimal) -> Decimal {
         match self {
             TemperatureUnit::Celsius => v,
-            TemperatureUnit::Fahrenheit => v * (9.0 / 5.0) + 32.0,
-            TemperatureUnit::Kelvin => v + 273.15,
+            TemperatureUnit::Fahrenheit => v * (dec!(9.0) / dec!(5.0)) + dec!(32.0),
+            TemperatureUnit::Kelvin => v + dec!(273.15),
         }
     }
 }

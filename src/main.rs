@@ -1,23 +1,9 @@
-use pepino::Calc;
+use rust_decimal::Decimal;
+use rust_decimal::prelude::*;
+use rust_decimal_macros::dec;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut computer = Calc::default();
-
-    computer.compute(
-        "\
-        5 + 4
-        13 +     8
-        20
-        15 * 5 + 3 / (5 / (4 + 1))
-        15 * 5 + 30 / 5 * 3
-        15 + 5 * 3
-        1 / 3 * 5 * 3
-        (15 - 5) / 2
-        10 celsius + 1 kelvin
-        10 celsius + 1 kelvin
-        - 1 / - 3
-    ",
-    );
+    println!("{}", dec!(648000) / Decimal::PI * dec!(149_597_870_700));
 
     Ok(())
 }

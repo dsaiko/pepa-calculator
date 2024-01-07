@@ -1,3 +1,4 @@
+use rust_decimal::Decimal;
 use thiserror::Error;
 
 pub use self::calc::Calc;
@@ -13,7 +14,11 @@ mod functions;
 mod generators;
 mod operators;
 mod parser;
+mod unit_prefixes;
+#[cfg(test)]
+mod unit_prefixes_test;
 mod units;
+mod units_length;
 mod units_temperature;
 mod units_time;
 mod utils;
@@ -41,11 +46,11 @@ pub enum ComputeError {
     #[error("Unsupported unary operator")]
     UnsupportedUnaryOperator,
     #[error("Invalid number of parameters for function '{0}': {1}")]
-    InvalidNumberOfParametersForFunction(String, usize),
+    InvalidParametersForFunction(String, String),
     #[error("Invalid number of parameters for operator {0}: {1}")]
     InvalidNumberOfParametersForOperator(char, usize),
     #[error("Invalid expression: {0}")]
     InvalidExpression(String),
     #[error("Unable to convert ${0} {1} to {2}")]
-    UnitConversionError(f64, String, String),
+    UnitConversionError(Decimal, String, String),
 }

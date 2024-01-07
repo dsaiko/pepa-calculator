@@ -1,5 +1,5 @@
-use crate::expression::{Expression, ExpressionToken, NumericResult};
 use crate::{ComputeError, Unit};
+use crate::expression::{Expression, ExpressionToken, NumericResult};
 
 pub(super) fn compute(ex: &Expression) -> Result<NumericResult, ComputeError> {
     let mut operands = Vec::new();
@@ -65,12 +65,13 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericResult, ComputeError> {
         if let Some(f) = function {
             let (converted, unit) = convert_operands(&operands, f.unit)?;
 
-            let r = if (f.params_validation)(converted.len()) {
+            let params = converted.iter().map(|n| n.value).collect();
+            let r = if (f.params_validation)(params) {
                 (f.fce)(converted.iter().map(|n| n.value).collect())
             } else {
-                return Err(ComputeError::InvalidNumberOfParametersForFunction(
+                return Err(ComputeError::InvalidParametersForFunction(
                     f.representation.to_owned(),
-                    converted.len(),
+                    format!("{:?}", converted),
                 ));
             };
 
@@ -126,14 +127,16 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericResult, ComputeError> {
     // if function is at the end - invoke it with operands
     if let Some(f) = function {
         let (converted, unit) = convert_operands(&operands, f.unit)?;
-        let r = if (f.params_validation)(converted.len()) {
+        let params = converted.iter().map(|n| n.value).collect();
+        let r = if (f.params_validation)(params) {
             (f.fce)(converted.iter().map(|n| n.value).collect())
         } else {
-            return Err(ComputeError::InvalidNumberOfParametersForFunction(
+            return Err(ComputeError::InvalidParametersForFunction(
                 f.representation.to_owned(),
-                converted.len(),
+                format!("{:?}", converted),
             ));
         };
+
         result = Some(NumericResult::new(r, unit));
     }
 

@@ -1,6 +1,9 @@
 use std::collections::HashMap;
+use std::sync::OnceLock;
 
-use once_cell::sync::Lazy;
+use crate::Decimal;
 
-pub static CONSTANTS: Lazy<HashMap<&str, f64>> =
-    Lazy::new(|| HashMap::from([("E", std::f64::consts::E), ("PI", std::f64::consts::PI)]));
+pub fn constants() -> &'static HashMap<&'static str, Decimal> {
+    static MEM: OnceLock<HashMap<&'static str, Decimal>> = OnceLock::new();
+    MEM.get_or_init(|| HashMap::from([("E", Decimal::E), ("PI", Decimal::PI)]))
+}

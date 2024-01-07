@@ -1,6 +1,9 @@
 use std::fmt::{Display, Formatter};
 
+use rust_decimal_macros::dec;
 use strum_macros::EnumIter;
+
+use crate::Decimal;
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter)]
 pub enum TimeUnit {
@@ -20,21 +23,21 @@ impl TimeUnit {
         }
     }
 
-    pub fn to_reference_unit(self, v: f64) -> f64 {
+    pub fn to_reference_unit(self, v: Decimal) -> Decimal {
         match self {
             TimeUnit::Second => v,
-            TimeUnit::Minute => v * 60.0,
-            TimeUnit::Hour => v * 60.0 * 60.0,
-            TimeUnit::Day => v * 24.0 * 60.0 * 60.0,
+            TimeUnit::Minute => v * dec!(60.0),
+            TimeUnit::Hour => v * dec!(60.0) * dec!(60.0),
+            TimeUnit::Day => v * dec!(24.0) * dec!(60.0) * dec!(60.0),
         }
     }
 
-    pub fn from_reference_unit(self, v: f64) -> f64 {
+    pub fn from_reference_unit(self, v: Decimal) -> Decimal {
         match self {
             TimeUnit::Second => v,
-            TimeUnit::Minute => v / 60.0,
-            TimeUnit::Hour => v / 60.0 / 60.0,
-            TimeUnit::Day => v / 60.0 / 60.0 / 24.0,
+            TimeUnit::Minute => v / dec!(60.0),
+            TimeUnit::Hour => v / dec!(60.0) / dec!(60.0),
+            TimeUnit::Day => v / dec!(60.0) / dec!(60.0) / dec!(24.0),
         }
     }
 }
@@ -45,10 +48,10 @@ impl Display for TimeUnit {
             f,
             "{}",
             match self {
-                TimeUnit::Second => "seconds",
-                TimeUnit::Minute => "minutes",
-                TimeUnit::Hour => "hours",
-                TimeUnit::Day => "days",
+                TimeUnit::Second => "second",
+                TimeUnit::Minute => "minute",
+                TimeUnit::Hour => "hour",
+                TimeUnit::Day => "day",
             }
         )
     }

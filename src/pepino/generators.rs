@@ -1,35 +1,41 @@
 use std::collections::HashMap;
+use std::sync::OnceLock;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use once_cell::sync::Lazy;
+use crate::Decimal;
 
 #[derive(Debug, Clone)]
 pub struct Generator {
     pub fce_name: String,
-    pub fce: fn() -> f64,
+    pub fce: fn() -> Decimal,
 }
 
-pub static GENERATORS: Lazy<HashMap<String, Generator>> = Lazy::new(|| {
-    let mut generators = HashMap::new();
+pub fn generators() -> &'static HashMap<String, Generator> {
+    static MEM: OnceLock<HashMap<String, Generator>> = OnceLock::new();
+    MEM.get_or_init(|| {
+        let mut generators = HashMap::new();
 
-    for generator in [
-        Generator {
-            fce_name: "random()".to_owned(),
-            fce: fastrand::f64,
-        },
-        Generator {
-            fce_name: "timestamp()".to_owned(),
-            fce: || {
-                SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_millis() as f64
+        for generator in [
+            Generator {
+                fce_name: "random()".to_owned(),
+                fce: || Decimal::from_f64_retain(fastrand::f64()).unwrap(),
             },
-        },
-    ] {
-        let name = generator.fce_name.to_ascii_uppercase().replace("()", "");
-        generators.insert(name, generator);
-    }
+            Generator {
+                fce_name: "timestamp()".to_owned(),
+                fce: || {
+                    SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis()
+                        .into()
+                },
+            },
+        ] {
+            let name = generator.fce_name.to_ascii_uppercase().replace("()", "");
 
-    generators
-});
+            generators.insert(name, generator);
+        }
+
+        generators
+    })
+}

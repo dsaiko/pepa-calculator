@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
+use std::sync::OnceLock;
 
-use once_cell::sync::Lazy;
 use strum::IntoEnumIterator;
 
+use crate::Decimal;
 use crate::units_temperature::TemperatureUnit;
 use crate::units_time::TimeUnit;
 
@@ -13,34 +14,37 @@ pub enum Unit {
     Time(TimeUnit),
 }
 
-static UNITS_ABBREVIATIONS: Lazy<HashMap<String, Unit>> = Lazy::new(|| {
-    let mut abbreviations = HashMap::new();
+pub fn abbreviations() -> &'static HashMap<String, Unit> {
+    static MEM: OnceLock<HashMap<String, Unit>> = OnceLock::new();
+    MEM.get_or_init(|| {
+        let mut abbreviations = HashMap::new();
 
-    for t in TemperatureUnit::iter() {
-        let abb = t.abbreviations();
-        let unit = Unit::Temperature(t);
-        for abbreviation in abb {
-            abbreviations.insert(abbreviation.to_lowercase(), unit);
+        for t in TemperatureUnit::iter() {
+            let abb = t.abbreviations();
+            let unit = Unit::Temperature(t);
+            for abbreviation in abb {
+                abbreviations.insert(abbreviation.to_lowercase(), unit);
+            }
         }
-    }
 
-    for t in TimeUnit::iter() {
-        let abb = t.abbreviations();
-        let unit = Unit::Time(t);
-        for abbreviation in abb {
-            abbreviations.insert(abbreviation.to_lowercase(), unit);
+        for t in TimeUnit::iter() {
+            let abb = t.abbreviations();
+            let unit = Unit::Time(t);
+            for abbreviation in abb {
+                abbreviations.insert(abbreviation.to_lowercase(), unit);
+            }
         }
-    }
 
-    abbreviations
-});
+        abbreviations
+    })
+}
 
 impl Unit {
     pub fn from_string(name: &str) -> Option<&Unit> {
-        UNITS_ABBREVIATIONS.get(name.to_lowercase().as_str())
+        abbreviations().get(name.to_lowercase().as_str())
     }
 
-    pub fn conversion(&self, v: f64, to: &Unit) -> Option<f64> {
+    pub fn conversion(&self, v: Decimal, to: &Unit) -> Option<Decimal> {
         match self {
             Unit::Temperature(from) => match to {
                 Unit::Temperature(to) => Some(to.from_reference_unit(from.to_reference_unit(v))),

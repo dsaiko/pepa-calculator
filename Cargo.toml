@@ -19,11 +19,12 @@ name = "pepino"
 path = "src/main.rs"
 
 [dependencies]
-once_cell = "1.19.0"
 strum = "0.25.0"
 strum_macros = "0.25.3"
 thiserror = "1.0.51"
 fastrand = "2.0.1"
+rust_decimal = { version = "1.33.1", default-features = false, features = ["maths"] }
+rust_decimal_macros = "1.33.1"
 
 [package.metadata.docs.rs]
 all-features = true

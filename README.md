@@ -78,3 +78,7 @@ TODO:
 - f (x, y) = x +y ; f(5,4)...
 - pow(5km, 4km)??
 - km * km -> ha???
+- liter, pound
+- gram miligram, pound
+- f128, https://crates.io/crates/bigdecimal?? https://crates.io/crates/rust_decimal
+  https://docs.rs/uom/latest/uom/all.html

@@ -1,10 +1,10 @@
-use crate::constants::CONSTANTS;
+use crate::{Decimal, ParserError, Unit};
+use crate::constants::constants;
 use crate::expression::{Expression, ExpressionToken, NumericResult};
-use crate::functions::{Function, FUNCTIONS, FUNCTION_NAMES};
-use crate::generators::GENERATORS;
-use crate::operators::{Priority, CONVERSION_CHARACTER, OPERATORS};
+use crate::functions::{Function, function_names, functions};
+use crate::generators::generators;
+use crate::operators::{CONVERSION_CHARACTER, operators, Priority};
 use crate::utils::split_string_by_comma;
-use crate::{ParserError, Unit};
 
 pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
     let mut expression = Expression::new();
@@ -12,7 +12,7 @@ pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
     let mut ex = ex.to_owned();
 
     // replace generator fce by name only
-    for (name, g) in GENERATORS.iter() {
+    for (name, g) in generators().iter() {
         ex = ex.replace(&g.fce_name, name);
     }
 
@@ -43,13 +43,13 @@ pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
     let mut chars = ex.chars();
     while let Some(c) = chars.next() {
         // process operators
-        if let Some(o) = OPERATORS.get(&c) {
+        if let Some(o) = operators().get(&c) {
             if !token.is_empty() {
                 let ex = parse_token(&token)?;
                 expression.push(ex);
                 token.clear()
             }
-            expression.push(ExpressionToken::Operator(o.clone()));
+            expression.push(ExpressionToken::Operator((*o).clone()));
             continue;
         }
 
@@ -360,30 +360,33 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
     }
 
     // numeric expression
-    if let Ok(n) = token.parse::<f64>() {
+    if let Ok(n) = token.parse::<Decimal>() {
         return Ok(ExpressionToken::Numeric(NumericResult::new(n, None)));
     }
 
     // function
-    if let Some(f) = FUNCTIONS.get(token) {
-        return Ok(ExpressionToken::Function(f.clone()));
+    if let Some(f) = functions().get(token) {
+        return Ok(ExpressionToken::Function((*f).clone()));
     }
 
     // constant
-    if let Some(n) = CONSTANTS.get(token) {
-        return Ok(ExpressionToken::Numeric(NumericResult::new(*n, None)));
+    if let Some(n) = constants().get(token) {
+        return Ok(ExpressionToken::Numeric(NumericResult::new(
+            (*n).clone(),
+            None,
+        )));
     }
 
     // generator
-    if let Some(g) = GENERATORS.get(token) {
-        return Ok(ExpressionToken::Generator(g.clone()));
+    if let Some(g) = generators().get(token) {
+        return Ok(ExpressionToken::Generator((*g).clone()));
     }
 
     // check if token does not start with a function name
     // sin cos ( PI )
-    for fce_name in FUNCTION_NAMES.iter() {
+    for fce_name in function_names().iter() {
         if token.starts_with(fce_name) {
-            let Some(fce) = FUNCTIONS.get(fce_name) else {
+            let Some(fce) = functions().get(fce_name) else {
                 return Err(ParserError::InvalidFunctionName((*fce_name).to_owned()));
             };
 
@@ -392,7 +395,7 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
             };
 
             return Ok(ExpressionToken::Expression(Expression::from_tokens(vec![
-                ExpressionToken::Function(fce.clone()),
+                ExpressionToken::Function((*fce).clone()),
                 ex,
             ])));
         }
@@ -436,7 +439,7 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
     let units = units.iter().map(|u| *u.unwrap()).collect::<Vec<_>>();
 
     // number must be a numeric value
-    if let Ok(n) = number.parse::<f64>() {
+    if let Ok(n) = number.parse::<Decimal>() {
         let e = ExpressionToken::Expression(Expression::from_tokens(vec![
             ExpressionToken::Numeric(NumericResult::new(n, None)),
             ExpressionToken::ConversionChain(units),
@@ -449,7 +452,7 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
         let f = Function {
             representation: format!("{}{}", CONVERSION_CHARACTER, units[0]),
             fce: |params| params[0],
-            params_validation: |count| count == 1,
+            params_validation: |params| params.len() == 1,
             unit: Some(units[0]),
         };
 

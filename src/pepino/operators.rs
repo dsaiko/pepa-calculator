@@ -1,9 +1,10 @@
 use std::collections::HashMap;
+use std::sync::OnceLock;
 
-use once_cell::sync::Lazy;
+use rust_decimal::MathematicalOps;
 use strum_macros::Display;
 
-use crate::ComputeError;
+use crate::{ComputeError, Decimal};
 
 #[derive(Debug, Clone, Display, Eq, PartialEq)]
 pub enum Priority {
@@ -16,53 +17,56 @@ pub enum Priority {
 pub struct Operator {
     pub representation: char,
     pub priority: Priority,
-    pub unary_action: fn(right: f64) -> Result<f64, ComputeError>,
-    pub binary_action: fn(left: f64, right: f64) -> Result<f64, ComputeError>,
+    pub unary_action: fn(right: Decimal) -> Result<Decimal, ComputeError>,
+    pub binary_action: fn(left: Decimal, right: Decimal) -> Result<Decimal, ComputeError>,
 }
 
 pub(super) const CONVERSION_CHARACTER: char = '→';
 
-pub static OPERATORS: Lazy<HashMap<char, Operator>> = Lazy::new(|| {
-    let mut operators = HashMap::new();
+pub fn operators() -> &'static HashMap<char, Operator> {
+    static MEM: OnceLock<HashMap<char, Operator>> = OnceLock::new();
+    MEM.get_or_init(|| {
+        let mut operators = HashMap::new();
 
-    for operator in [
-        Operator {
-            representation: '+',
-            priority: Priority::Low,
-            unary_action: Ok,
-            binary_action: |x, y| Ok(x + y),
-        },
-        Operator {
-            representation: '-',
-            priority: Priority::Low,
-            unary_action: |x| Ok(-x),
-            binary_action: |x, y| Ok(x - y),
-        },
-        Operator {
-            representation: '*',
-            priority: Priority::High,
-            unary_action: unsupported_unary_operator,
-            binary_action: |x, y| Ok(x * y),
-        },
-        Operator {
-            representation: '/',
-            priority: Priority::High,
-            unary_action: unsupported_unary_operator,
-            binary_action: |x, y| Ok(x / y),
-        },
-        Operator {
-            representation: '^',
-            priority: Priority::Highest,
-            unary_action: unsupported_unary_operator,
-            binary_action: |x, y| Ok(x.powf(y)),
-        },
-    ] {
-        operators.insert(operator.representation, operator);
-    }
+        for operator in [
+            Operator {
+                representation: '+',
+                priority: Priority::Low,
+                unary_action: Ok,
+                binary_action: |x, y| Ok(x + y),
+            },
+            Operator {
+                representation: '-',
+                priority: Priority::Low,
+                unary_action: |x| Ok(-x),
+                binary_action: |x, y| Ok(x - y),
+            },
+            Operator {
+                representation: '*',
+                priority: Priority::High,
+                unary_action: unsupported_unary_operator,
+                binary_action: |x, y| Ok(x * y),
+            },
+            Operator {
+                representation: '/',
+                priority: Priority::High,
+                unary_action: unsupported_unary_operator,
+                binary_action: |x, y| Ok(x / y),
+            },
+            Operator {
+                representation: '^',
+                priority: Priority::Highest,
+                unary_action: unsupported_unary_operator,
+                binary_action: |x, y| Ok(x.powd(y)),
+            },
+        ] {
+            operators.insert(operator.representation, operator);
+        }
 
-    operators
-});
+        operators
+    })
+}
 
-fn unsupported_unary_operator(_: f64) -> Result<f64, ComputeError> {
+fn unsupported_unary_operator(_: Decimal) -> Result<Decimal, ComputeError> {
     Err(ComputeError::UnsupportedUnaryOperator)
 }
