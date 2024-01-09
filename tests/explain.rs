@@ -24,32 +24,32 @@ fn explain() {
         ("min(2,5)", "min(2,5)"),
         ("min(2,5 * 2 * 3)", "min(2,(5*2)*3)"),
         ("55 celsius", "55→°C"),
-        ("5 * 55 celsius + 3 Kelvins", "(5*(55→°C))+(3→Kelvin)"),
-        ("5 * celsius 55 + 3 Kelvins", "(5*(55→°C))+(3→Kelvin)"),
+        ("5 * 55 celsius + 3 Kelvins", "(5*(55→°C))+(3→K)"),
+        ("5 * celsius 55 + 3 Kelvins", "(5*(55→°C))+(3→K)"),
         ("celsius(55)", "→°C55"),
         ("15 fahrenheits + 3 celsius", "(15→°F)+(3→°C)"),
         (
             "15 fahrenheits + 3 kelvins + 2 * 20 celsius",
-            "(15→°F)+(3→Kelvin)+(2*(20→°C))",
+            "(15→°F)+(3→K)+(2*(20→°C))",
         ),
         (
             "10 celsius + pow(5,2) Fahrenheit",
             "(10→°C)+((pow(5,2))→°F)",
         ),
         ("(33 + 3) celsius + 15", "((33+3)→°C)+15"),
-        ("(10 kelvins) celsius", "(10→Kelvin)→°C"),
+        ("(10 kelvins) celsius", "(10→K)→°C"),
         (
             "10 kelvins to celsius to kelvins to Fahrenheit",
-            "10→Kelvin→°C→Kelvin→°F",
+            "10→K→°C→K→°F",
         ),
         ("pow(5,2) Fahrenheit to Celsius", "(pow(5,2))→°F→°C"),
         (
             "min(55 Celsius, 180 Kelvin) celsius",
-            "(min(55→°C,180→Kelvin))→°C",
+            "(min(55→°C,180→K))→°C",
         ),
         (
             "min(55 Celsius, 180 Kelvin) into celsius",
-            "(min(55→°C,180→Kelvin))→°C",
+            "(min(55→°C,180→K))→°C",
         ),
     ];
 

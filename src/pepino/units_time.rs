@@ -1,9 +1,8 @@
-use std::fmt::{Display, Formatter};
-
 use rust_decimal_macros::dec;
 use strum_macros::EnumIter;
 
-use crate::Decimal;
+use crate::utils::Pluralize;
+use crate::{pluralize, string, Decimal};
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter)]
 pub enum TimeUnit {
@@ -40,19 +39,13 @@ impl TimeUnit {
             TimeUnit::Day => v / dec!(60.0) / dec!(60.0) / dec!(24.0),
         }
     }
-}
 
-impl Display for TimeUnit {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                TimeUnit::Second => "second",
-                TimeUnit::Minute => "minute",
-                TimeUnit::Hour => "hour",
-                TimeUnit::Day => "day",
-            }
-        )
+    pub fn to_string(self, v: Decimal) -> String {
+        match self {
+            TimeUnit::Second => string!("s"),
+            TimeUnit::Minute => string!("m"),
+            TimeUnit::Hour => string!("h"),
+            TimeUnit::Day => pluralize!("day", v),
+        }
     }
 }

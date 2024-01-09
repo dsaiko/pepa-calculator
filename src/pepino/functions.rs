@@ -4,7 +4,7 @@ use std::sync::OnceLock;
 use rust_decimal::MathematicalOps;
 use rust_decimal_macros::dec;
 
-use crate::{Decimal, Unit};
+use crate::{Decimal, string, Unit};
 
 #[derive(Debug, Clone)]
 pub struct Function {
@@ -21,7 +21,7 @@ pub(super) fn functions() -> &'static HashMap<String, Function> {
 
         for function in [
             Function {
-                representation: "sqrt".to_owned(),
+                representation: string!("sqrt"),
                 fce: |params| params[0].sqrt().unwrap(),
                 params_validation: |params| {
                     params.len() == 1 && !params.iter().any(|v| *v < dec!(0))
@@ -29,117 +29,113 @@ pub(super) fn functions() -> &'static HashMap<String, Function> {
                 unit: None,
             },
             Function {
-                representation: "sqr".to_owned(),
+                representation: string!("sqr"),
                 fce: |params| params[0].powu(2),
                 params_validation: |params| params.len() == 1,
                 unit: None,
             },
             Function {
-                representation: "round".to_owned(),
+                representation: string!("round"),
                 fce: |params| params[0].round(),
                 params_validation: |params| params.len() == 1,
                 unit: None,
             },
             Function {
-                representation: "trunc".to_owned(),
+                representation: string!("trunc"),
                 fce: |params| params[0].trunc(),
                 params_validation: |params| params.len() == 1,
                 unit: None,
             },
             Function {
-                representation: "fract".to_owned(),
+                representation: string!("fract"),
                 fce: |params| params[0].fract(),
                 params_validation: |params| params.len() == 1,
                 unit: None,
             },
             Function {
-                representation: "floor".to_owned(),
+                representation: string!("floor"),
                 fce: |params| params[0].floor(),
                 params_validation: |params| params.len() == 1,
                 unit: None,
             },
             Function {
-                representation: "ceil".to_owned(),
+                representation: string!("ceil"),
                 fce: |params| params[0].ceil(),
                 params_validation: |params| params.len() == 1,
                 unit: None,
             },
             Function {
-                representation: "sin".to_owned(),
+                representation: string!("sin"),
                 fce: |params| params[0].sin(),
                 params_validation: |params| params.len() == 1,
                 unit: None,
             },
             Function {
-                representation: "cos".to_owned(),
+                representation: string!("cos"),
                 fce: |params| params[0].cos(),
                 params_validation: |params| params.len() == 1,
                 unit: None,
             },
             Function {
-                representation: "tan".to_owned(),
+                representation: string!("tan"),
                 fce: |params| params[0].tan(),
                 params_validation: |params| params.len() == 1,
                 unit: None,
             },
             Function {
-                representation: "min".to_owned(),
+                representation: string!("min"),
                 fce: |params| {
                     params
                         .into_iter()
                         .min_by(|a, b| a.partial_cmp(b).unwrap())
                         .unwrap()
                 },
-                params_validation: |params| params.len() > 0,
+                params_validation: |params| !params.is_empty(),
                 unit: None,
             },
             Function {
-                representation: "max".to_owned(),
+                representation: string!("max"),
                 fce: |params| {
                     params
                         .into_iter()
                         .max_by(|a, b| a.partial_cmp(b).unwrap())
                         .unwrap()
                 },
-                params_validation: |params| params.len() > 0,
+                params_validation: |params| !params.is_empty(),
                 unit: None,
             },
             Function {
-                representation: "ln".to_owned(),
+                representation: string!("ln"),
                 fce: |params| params[0].ln(),
                 params_validation: |params| params.len() == 1,
                 unit: None,
             },
             Function {
-                representation: "log".to_owned(),
+                representation: string!("log"),
                 fce: |params| params[0].log10(),
                 params_validation: |params| params.len() == 1,
                 unit: None,
             },
             Function {
-                representation: "pow".to_owned(),
-                fce: |params| {
-                    let x = params[0].powd(params[1]);
-                    println!("{}", x);
-                    x
-                },
+                representation: string!("pow"),
+                fce: |params| params[0].powd(params[1]),
                 params_validation: |params| params.len() == 2,
                 unit: None,
             },
             Function {
-                representation: "sum".to_owned(),
+                representation: string!("sum"),
                 fce: |params| params.iter().sum(),
-                params_validation: |params| params.len() > 0,
+                params_validation: |params| !params.is_empty(),
                 unit: None,
             },
             Function {
-                representation: "average".to_owned(),
+                representation: string!("average"),
                 fce: |params| params.iter().sum::<Decimal>() / Decimal::from(params.len()),
-                params_validation: |params| params.len() > 0,
+                params_validation: |params| !params.is_empty(),
                 unit: None,
             },
             Function {
-                representation: "median".to_owned(),
+                representation: string!("median"),
                 fce: |params| {
                     let mut params = params.clone();
                     params.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -152,13 +148,13 @@ pub(super) fn functions() -> &'static HashMap<String, Function> {
                         (params[index - 1] + params[index]) / dec!(2.0)
                     }
                 },
-                params_validation: |params| params.len() > 0,
+                params_validation: |params| !params.is_empty(),
                 unit: None,
             },
             Function {
-                representation: "count".to_owned(),
+                representation: string!("count"),
                 fce: |params| params.len().into(),
-                params_validation: |params| params.len() > 0,
+                params_validation: |params| !params.is_empty(),
                 unit: None,
             },
         ] {

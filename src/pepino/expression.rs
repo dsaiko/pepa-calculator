@@ -32,8 +32,8 @@ impl NumericResult {
         let Some(v) = unit.conversion(self.value, &to) else {
             return Err(ComputeError::UnitConversionError(
                 self.value,
-                unit.to_string(),
-                to.to_string(),
+                unit.to_string(self.value),
+                to.to_string(self.value),
             ));
         };
 
@@ -88,7 +88,7 @@ impl Display for Expression {
                 ExpressionToken::Operator(o) => write!(f, "{}", o.representation)?,
                 ExpressionToken::Numeric(n) => match n.unit {
                     None => write!(f, "{}", n.value)?,
-                    Some(u) => write!(f, "{}{}", n.value, u)?,
+                    Some(u) => write!(f, "{}{}", n.value, u.to_string(Decimal::ZERO))?,
                 },
                 ExpressionToken::Expression(e) => write!(f, "({})", e)?,
                 ExpressionToken::Function(fce) => write!(f, "{}", fce.representation)?,
@@ -107,7 +107,12 @@ impl Display for Expression {
                 }
                 ExpressionToken::ConversionChain(units) => {
                     for unit in units {
-                        write!(f, "{}{}", CONVERSION_CHARACTER, unit)?;
+                        write!(
+                            f,
+                            "{}{}",
+                            CONVERSION_CHARACTER,
+                            unit.to_string(Decimal::ZERO)
+                        )?;
                     }
                 }
             }

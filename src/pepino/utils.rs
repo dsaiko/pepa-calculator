@@ -1,3 +1,5 @@
+use rust_decimal::Decimal;
+
 pub(super) fn split_string_by_comma(s: &str) -> Vec<String> {
     let s = s.trim();
     if s.is_empty() {
@@ -45,4 +47,45 @@ pub(super) fn split_string_by_comma(s: &str) -> Vec<String> {
     token.clear();
 
     res
+}
+
+pub(super) trait Pluralize {
+    fn is_plural(&self) -> bool;
+}
+
+impl Pluralize for Decimal {
+    fn is_plural(&self) -> bool {
+        self.abs() != Decimal::ONE
+    }
+}
+
+impl Pluralize for i64 {
+    fn is_plural(&self) -> bool {
+        self.abs() != 1
+    }
+}
+
+#[macro_export]
+macro_rules! pluralize {
+    ($s:expr, $x:expr) => {
+        if Pluralize::is_plural(&$x) {
+            $s.to_owned() + "s"
+        } else {
+            $s.to_owned()
+        }
+    };
+    ($s:expr, $p:expr, $x:expr) => {
+        if Pluralize::is_plural(&$x) {
+            $p.to_owned()
+        } else {
+            $s.to_owned()
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! string {
+    ($s:expr) => {
+        $s.to_owned()
+    };
 }

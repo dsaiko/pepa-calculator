@@ -54,7 +54,10 @@ fn temperature_celsius() {
         ("15 fahrenheits + 3 kelvins + 2 * 20 celsius", dec!(33.56)),
     ];
 
-    test(tests, Some(Unit::Temperature(TemperatureUnit::Celsius)));
+    test(
+        tests,
+        Some(Unit::Temperature(TemperatureUnit::DegreesCelsius)),
+    );
 }
 
 #[test]
@@ -72,7 +75,10 @@ fn temperature_fahrenheit() {
         ("10 celsius + Fahrenheit(pow(5,2)) ", dec!(75.0)),
     ];
 
-    test(tests, Some(Unit::Temperature(TemperatureUnit::Fahrenheit)));
+    test(
+        tests,
+        Some(Unit::Temperature(TemperatureUnit::DegreesFahrenheit)),
+    );
 }
 
 #[test]
@@ -85,7 +91,10 @@ fn in_operator() {
         ),
     ];
 
-    test(tests, Some(Unit::Temperature(TemperatureUnit::Fahrenheit)));
+    test(
+        tests,
+        Some(Unit::Temperature(TemperatureUnit::DegreesFahrenheit)),
+    );
 }
 
 #[test]
@@ -98,7 +107,10 @@ fn list_fce() {
         ),
     ];
 
-    test(tests, Some(Unit::Temperature(TemperatureUnit::Celsius)));
+    test(
+        tests,
+        Some(Unit::Temperature(TemperatureUnit::DegreesCelsius)),
+    );
 }
 
 #[test]

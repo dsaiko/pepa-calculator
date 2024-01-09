@@ -371,10 +371,7 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
 
     // constant
     if let Some(n) = constants().get(token) {
-        return Ok(ExpressionToken::Numeric(NumericResult::new(
-            (*n).clone(),
-            None,
-        )));
+        return Ok(ExpressionToken::Numeric(NumericResult::new(*n, None)));
     }
 
     // generator
@@ -450,7 +447,11 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
     if units.len() == 1 {
         // only units, treat it as a conversion functions
         let f = Function {
-            representation: format!("{}{}", CONVERSION_CHARACTER, units[0]),
+            representation: format!(
+                "{}{}",
+                CONVERSION_CHARACTER,
+                units[0].to_string(Decimal::ZERO)
+            ),
             fce: |params| params[0],
             params_validation: |params| params.len() == 1,
             unit: Some(units[0]),

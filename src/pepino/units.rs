@@ -1,12 +1,11 @@
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
 use std::sync::OnceLock;
 
 use strum::IntoEnumIterator;
 
-use crate::Decimal;
 use crate::units_temperature::TemperatureUnit;
 use crate::units_time::TimeUnit;
+use crate::Decimal;
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq)]
 pub enum Unit {
@@ -56,17 +55,12 @@ impl Unit {
             },
         }
     }
-}
 
-impl Display for Unit {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Unit::Temperature(t) => t.to_string(),
-                Unit::Time(t) => t.to_string(),
-            }
-        )
+    pub fn to_string(&self, v: Decimal) -> String {
+        // TODO TRAIT
+        match self {
+            Unit::Temperature(t) => t.to_string(v),
+            Unit::Time(t) => t.to_string(v),
+        }
     }
 }

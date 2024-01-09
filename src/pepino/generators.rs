@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::Decimal;
+use crate::{Decimal, string};
 
 #[derive(Debug, Clone)]
 pub struct Generator {
@@ -17,11 +17,11 @@ pub fn generators() -> &'static HashMap<String, Generator> {
 
         for generator in [
             Generator {
-                fce_name: "random()".to_owned(),
+                fce_name: string!("random()"),
                 fce: || Decimal::from_f64_retain(fastrand::f64()).unwrap(),
             },
             Generator {
-                fce_name: "timestamp()".to_owned(),
+                fce_name: string!("timestamp()"),
                 fce: || {
                     SystemTime::now()
                         .duration_since(UNIX_EPOCH)

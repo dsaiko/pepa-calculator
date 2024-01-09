@@ -80,5 +80,9 @@ TODO:
 - km * km -> ha???
 - liter, pound
 - gram miligram, pound
-- f128, https://crates.io/crates/bigdecimal?? https://crates.io/crates/rust_decimal
-  https://docs.rs/uom/latest/uom/all.html
+-  https://docs.rs/uom/latest/uom/all.html
+-  15 km + 1 m
+-  15 h + 1m
+- grain
+- 1 nm + 1 cm + 1 NM
+- dag dkg
