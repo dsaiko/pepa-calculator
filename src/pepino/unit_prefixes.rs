@@ -2,10 +2,11 @@ use std::fmt::{Display, Formatter};
 
 use rust_decimal::MathematicalOps;
 use rust_decimal_macros::dec;
+use strum_macros::EnumIter;
 
 use crate::Decimal;
 
-#[derive(Debug, Clone, Eq, Copy, PartialEq)]
+#[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter)]
 pub enum UnitPrefix {
     Quetta,
     Ronna,

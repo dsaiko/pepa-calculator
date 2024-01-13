@@ -1,22 +1,22 @@
 use std::collections::HashMap;
 
-use crate::{ComputeError, ParserError};
 use crate::compute::compute;
-use crate::ComputeError::InvalidExpression;
-use crate::expression::{Expression, NumericResult};
+use crate::expression::{Expression, NumericExpression};
 use crate::operators::CONVERSION_CHARACTER;
 use crate::parser::parse;
+use crate::ComputeError::InvalidExpression;
+use crate::{string, ComputeError, ParserError};
 
 #[derive(Debug, Clone)]
 pub struct Statement {
     pub request: String,
     pub expression: Result<Expression, ParserError>,
-    pub result: Result<NumericResult, ComputeError>,
+    pub result: Result<NumericExpression, ComputeError>,
 }
 
 pub struct Calc {
     statements: Vec<Statement>,
-    variables: HashMap<String, NumericResult>,
+    variables: HashMap<String, NumericExpression>,
 }
 
 impl Default for Calc {
@@ -47,7 +47,7 @@ impl Calc {
         {
             let mut line = line.to_owned();
             for r in [" in ", " to ", " into "] {
-                line = line.replace(r, CONVERSION_CHARACTER.to_string().as_str())
+                line = line.replace(r, string!(CONVERSION_CHARACTER).as_str())
             }
 
             let compacted_line = line.split_whitespace().collect::<Vec<_>>().join("");

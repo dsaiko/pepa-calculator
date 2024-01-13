@@ -1,43 +1,78 @@
 use std::fmt::{Display, Formatter};
 
-use crate::{ComputeError, Decimal};
 use crate::functions::Function;
 use crate::generators::Generator;
-use crate::operators::{CONVERSION_CHARACTER, Operator};
-use crate::units::Unit;
+use crate::operators::{Operator, CONVERSION_CHARACTER};
+use crate::units::{Unit, UnitDefinition};
+use crate::{ComputeError, Decimal};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct NumericResult {
-    pub value: Decimal,
-    pub unit: Option<Unit>,
+pub enum NumericExpression {
+    Decimal(Decimal),
+    DecimalWithUnit(Decimal, Unit),
 }
 
-impl NumericResult {
-    pub fn new(value: Decimal, unit: Option<Unit>) -> NumericResult {
-        NumericResult { value, unit }
+impl NumericExpression {
+    pub fn new(value: Decimal, unit: Option<Unit>) -> NumericExpression {
+        if let Some(unit) = unit {
+            NumericExpression::DecimalWithUnit(value, unit)
+        } else {
+            NumericExpression::Decimal(value)
+        }
     }
 
-    pub fn convert_to(self, to: Unit, force_unit: bool) -> Result<NumericResult, ComputeError> {
-        let Some(unit) = self.unit else {
-            return Ok(NumericResult::new(
-                self.value,
-                if force_unit { Some(to) } else { None },
-            ));
-        };
-
-        if unit == to {
-            return Ok(self);
+    pub fn value(&self) -> Decimal {
+        match self {
+            NumericExpression::Decimal(n) => *n,
+            NumericExpression::DecimalWithUnit(n, _) => *n,
         }
+    }
 
-        let Some(v) = unit.conversion(self.value, &to) else {
-            return Err(ComputeError::UnitConversionError(
-                self.value,
-                unit.to_string(self.value),
-                to.to_string(self.value),
-            ));
-        };
+    pub fn unit(&self) -> Option<Unit> {
+        match self {
+            NumericExpression::Decimal(_) => None,
+            NumericExpression::DecimalWithUnit(_, u) => Some(*u),
+        }
+    }
 
-        Ok(NumericResult::new(v, Some(to)))
+    pub fn convert_to(self, to: Unit, force_unit: bool) -> Result<NumericExpression, ComputeError> {
+        match self {
+            NumericExpression::Decimal(n) => {
+                return Ok(if force_unit {
+                    NumericExpression::new(n, Some(to))
+                } else {
+                    NumericExpression::new(n, None)
+                })
+            }
+            NumericExpression::DecimalWithUnit(n, u) => {
+                if u == to {
+                    return Ok(self);
+                }
+
+                let Some(v) = u.conversion(n, &to) else {
+                    return Err(ComputeError::UnitConversionError(
+                        n,
+                        u.to_string_with_plural(&n),
+                        to.to_string_with_plural(&n),
+                    ));
+                };
+
+                Ok(NumericExpression::new(v, Some(to)))
+            }
+        }
+    }
+}
+
+impl Display for NumericExpression {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NumericExpression::Decimal(n) => {
+                write!(f, "{}", n)
+            }
+            NumericExpression::DecimalWithUnit(n, u) => {
+                write!(f, "{}{}", n, u.to_string_with_plural(n))
+            }
+        }
     }
 }
 
@@ -46,10 +81,10 @@ pub enum ExpressionToken {
     Operator(Operator),
     Function(Function),
     Generator(Generator),
-    Numeric(NumericResult),
+    Numeric(NumericExpression),
     List(Vec<Expression>),
     Expression(Expression),
-    ConversionChain(Vec<Unit>),
+    ConversionChain(Vec<UnitDefinition>), // vector of unit conversions
 }
 
 #[derive(Debug, Clone)]
@@ -86,10 +121,7 @@ impl Display for Expression {
         for token in self.tokens.iter() {
             match token {
                 ExpressionToken::Operator(o) => write!(f, "{}", o.representation)?,
-                ExpressionToken::Numeric(n) => match n.unit {
-                    None => write!(f, "{}", n.value)?,
-                    Some(u) => write!(f, "{}{}", n.value, u.to_string(Decimal::ZERO))?,
-                },
+                ExpressionToken::Numeric(n) => write!(f, "{}", n)?,
                 ExpressionToken::Expression(e) => write!(f, "({})", e)?,
                 ExpressionToken::Function(fce) => write!(f, "{}", fce.representation)?,
                 ExpressionToken::Generator(g) => write!(f, "{}", g.fce_name)?,
@@ -111,7 +143,7 @@ impl Display for Expression {
                             f,
                             "{}{}",
                             CONVERSION_CHARACTER,
-                            unit.to_string(Decimal::ZERO)
+                            unit.to_string_with_plural(&Decimal::ZERO)
                         )?;
                     }
                 }

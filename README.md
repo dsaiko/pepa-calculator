@@ -86,3 +86,5 @@ TODO:
 - grain
 - 1 nm + 1 cm + 1 NM
 - dag dkg
+- 5 m = ?? min/m
+- localization?

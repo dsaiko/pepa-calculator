@@ -1,10 +1,11 @@
-use crate::{Decimal, ParserError, Unit};
 use crate::constants::constants;
-use crate::expression::{Expression, ExpressionToken, NumericResult};
-use crate::functions::{Function, function_names, functions};
+use crate::expression::{Expression, ExpressionToken, NumericExpression};
+use crate::functions::{function_names, functions, Function};
 use crate::generators::generators;
-use crate::operators::{CONVERSION_CHARACTER, operators, Priority};
+use crate::operators::{operators, Priority, CONVERSION_CHARACTER};
+use crate::units::UnitDefinition;
 use crate::utils::split_string_by_comma;
+use crate::{Decimal, ParserError, Unit};
 
 pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
     let mut expression = Expression::new();
@@ -185,7 +186,7 @@ pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
                 let mut priority_group = false;
                 // check if second element is function
                 if let ExpressionToken::Function(f) = &buff2[1] {
-                    if f.unit.is_some() {
+                    if !f.unit.is_none() {
                         // only unit conversions
                         match buff2[0] {
                             ExpressionToken::Operator(_) => {}
@@ -279,7 +280,7 @@ pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
                 let mut priority_group = false;
                 // check if second element is function
                 if let ExpressionToken::Function(f) = &buff2[1] {
-                    if f.unit.is_some() {
+                    if !f.unit.is_none() {
                         // only unit conversions
                         match buff2[0] {
                             ExpressionToken::Operator(_) => {}
@@ -361,7 +362,7 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
 
     // numeric expression
     if let Ok(n) = token.parse::<Decimal>() {
-        return Ok(ExpressionToken::Numeric(NumericResult::new(n, None)));
+        return Ok(ExpressionToken::Numeric(NumericExpression::new(n, None)));
     }
 
     // function
@@ -371,7 +372,7 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
 
     // constant
     if let Some(n) = constants().get(token) {
-        return Ok(ExpressionToken::Numeric(NumericResult::new(*n, None)));
+        return Ok(ExpressionToken::Numeric(NumericExpression::new(*n, None)));
     }
 
     // generator
@@ -426,22 +427,28 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
     let units = unit
         .split(CONVERSION_CHARACTER)
         .filter(|&x| !x.is_empty())
-        .map(|u| Unit::from_string(u))
+        .map(UnitDefinition::from_string)
         .collect::<Vec<_>>();
 
     if units.is_empty() || units.iter().any(|u| u.is_none()) {
         return Err(ParserError::InvalidToken(token.to_owned()));
     }
 
-    let units = units.iter().map(|u| *u.unwrap()).collect::<Vec<_>>();
-
     // number must be a numeric value
     if let Ok(n) = number.parse::<Decimal>() {
-        let e = ExpressionToken::Expression(Expression::from_tokens(vec![
-            ExpressionToken::Numeric(NumericResult::new(n, None)),
+        if units.len() == 1 && matches!(units[0], UnitDefinition::Single(_)) {
+            match units[0] {
+                UnitDefinition::Single(u) => {
+                    return Ok(ExpressionToken::Numeric(NumericExpression::new(n, Some(u))))
+                }
+                _ => {}
+            }
+        }
+
+        return Ok(ExpressionToken::Expression(Expression::from_tokens(vec![
+            ExpressionToken::Numeric(NumericExpression::new(n, None)),
             ExpressionToken::ConversionChain(units),
-        ]));
-        return Ok(e);
+        ])));
     };
 
     if units.len() == 1 {
@@ -450,11 +457,11 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
             representation: format!(
                 "{}{}",
                 CONVERSION_CHARACTER,
-                units[0].to_string(Decimal::ZERO)
+                units[0].to_string_with_plural(&Decimal::ZERO) // TODO?
             ),
             fce: |params| params[0],
             params_validation: |params| params.len() == 1,
-            unit: Some(units[0]),
+            unit: units[0].clone(),
         };
 
         Ok(ExpressionToken::Function(f))
