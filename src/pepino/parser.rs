@@ -3,9 +3,9 @@ use crate::expression::{Expression, ExpressionToken, NumericExpression};
 use crate::functions::{function_names, functions, Function};
 use crate::generators::generators;
 use crate::operators::{operators, Priority, CONVERSION_CHARACTER};
-use crate::units::UnitDefinition;
 use crate::utils::split_string_by_comma;
 use crate::{Decimal, ParserError, Unit};
+use itertools::Itertools;
 
 pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
     let mut expression = Expression::new();
@@ -186,7 +186,7 @@ pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
                 let mut priority_group = false;
                 // check if second element is function
                 if let ExpressionToken::Function(f) = &buff2[1] {
-                    if !f.unit.is_none() {
+                    if !f.unit.is_empty() {
                         // only unit conversions
                         match buff2[0] {
                             ExpressionToken::Operator(_) => {}
@@ -280,7 +280,7 @@ pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
                 let mut priority_group = false;
                 // check if second element is function
                 if let ExpressionToken::Function(f) = &buff2[1] {
-                    if !f.unit.is_none() {
+                    if !f.unit.is_empty() {
                         // only unit conversions
                         match buff2[0] {
                             ExpressionToken::Operator(_) => {}
@@ -362,7 +362,9 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
 
     // numeric expression
     if let Ok(n) = token.parse::<Decimal>() {
-        return Ok(ExpressionToken::Numeric(NumericExpression::new(n, None)));
+        return Ok(ExpressionToken::Numeric(NumericExpression::with_unit(
+            n, None,
+        )));
     }
 
     // function
@@ -372,7 +374,9 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
 
     // constant
     if let Some(n) = constants().get(token) {
-        return Ok(ExpressionToken::Numeric(NumericExpression::new(*n, None)));
+        return Ok(ExpressionToken::Numeric(NumericExpression::with_unit(
+            *n, None,
+        )));
     }
 
     // generator
@@ -427,26 +431,24 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
     let units = unit
         .split(CONVERSION_CHARACTER)
         .filter(|&x| !x.is_empty())
-        .map(UnitDefinition::from_string)
+        .map(Unit::from_string)
         .collect::<Vec<_>>();
 
-    if units.is_empty() || units.iter().any(|u| u.is_none()) {
+    if units.is_empty() || units.iter().any(|u| u.is_empty()) {
         return Err(ParserError::InvalidToken(token.to_owned()));
     }
 
     // number must be a numeric value
     if let Ok(n) = number.parse::<Decimal>() {
-        if units.len() == 1 && matches!(units[0], UnitDefinition::Single(_)) {
-            match units[0] {
-                UnitDefinition::Single(u) => {
-                    return Ok(ExpressionToken::Numeric(NumericExpression::new(n, Some(u))))
-                }
-                _ => {}
-            }
+        if units.len() == 1 {
+            return Ok(ExpressionToken::Numeric(NumericExpression::with_units(
+                n,
+                units[0].clone(),
+            )));
         }
 
         return Ok(ExpressionToken::Expression(Expression::from_tokens(vec![
-            ExpressionToken::Numeric(NumericExpression::new(n, None)),
+            ExpressionToken::Numeric(NumericExpression::with_unit(n, None)),
             ExpressionToken::ConversionChain(units),
         ])));
     };
@@ -457,7 +459,11 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
             representation: format!(
                 "{}{}",
                 CONVERSION_CHARACTER,
-                units[0].to_string_with_plural(&Decimal::ZERO) // TODO?
+                units[0]
+                    .iter()
+                    .map(|u| u.to_string_with_plural(&Decimal::ZERO))
+                    .unique()
+                    .join("|")
             ),
             fce: |params| params[0],
             params_validation: |params| params.len() == 1,

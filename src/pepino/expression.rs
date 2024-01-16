@@ -1,23 +1,34 @@
+use itertools::Itertools;
 use std::fmt::{Display, Formatter};
 
 use crate::functions::Function;
 use crate::generators::Generator;
 use crate::operators::{Operator, CONVERSION_CHARACTER};
-use crate::units::{Unit, UnitDefinition};
+use crate::units::Unit;
 use crate::{ComputeError, Decimal};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum NumericExpression {
     Decimal(Decimal),
     DecimalWithUnit(Decimal, Unit),
+    DecimalWithMultipleUnits(Vec<(Decimal, Unit)>),
 }
 
 impl NumericExpression {
-    pub fn new(value: Decimal, unit: Option<Unit>) -> NumericExpression {
-        if let Some(unit) = unit {
-            NumericExpression::DecimalWithUnit(value, unit)
-        } else {
-            NumericExpression::Decimal(value)
+    pub fn with_unit(n: Decimal, unit: Option<Unit>) -> NumericExpression {
+        match unit {
+            None => NumericExpression::Decimal(n),
+            Some(u) => NumericExpression::DecimalWithUnit(n, u),
+        }
+    }
+
+    pub fn with_units(n: Decimal, units: Vec<Unit>) -> NumericExpression {
+        match units.len() {
+            0 => NumericExpression::Decimal(n),
+            1 => NumericExpression::DecimalWithUnit(n, units[0]),
+            _ => {
+                NumericExpression::DecimalWithMultipleUnits(units.iter().map(|u| (n, *u)).collect())
+            }
         }
     }
 
@@ -25,6 +36,7 @@ impl NumericExpression {
         match self {
             NumericExpression::Decimal(n) => *n,
             NumericExpression::DecimalWithUnit(n, _) => *n,
+            NumericExpression::DecimalWithMultipleUnits(_) => todo!(),
         }
     }
 
@@ -32,32 +44,58 @@ impl NumericExpression {
         match self {
             NumericExpression::Decimal(_) => None,
             NumericExpression::DecimalWithUnit(_, u) => Some(*u),
+            NumericExpression::DecimalWithMultipleUnits(_) => todo!(),
         }
     }
 
-    pub fn convert_to(self, to: Unit, force_unit: bool) -> Result<NumericExpression, ComputeError> {
+    pub fn convert_to(
+        &self,
+        to: &Unit,
+        force_unit: bool,
+    ) -> Result<NumericExpression, ComputeError> {
         match self {
             NumericExpression::Decimal(n) => {
                 return Ok(if force_unit {
-                    NumericExpression::new(n, Some(to))
+                    NumericExpression::with_unit(*n, Some(*to))
                 } else {
-                    NumericExpression::new(n, None)
+                    NumericExpression::with_unit(*n, None)
                 })
             }
             NumericExpression::DecimalWithUnit(n, u) => {
-                if u == to {
-                    return Ok(self);
+                if *u == *to {
+                    return Ok(self.clone());
                 }
 
                 let Some(v) = u.conversion(n, &to) else {
                     return Err(ComputeError::UnitConversionError(
-                        n,
+                        *n,
                         u.to_string_with_plural(&n),
                         to.to_string_with_plural(&n),
                     ));
                 };
 
-                Ok(NumericExpression::new(v, Some(to)))
+                Ok(NumericExpression::with_unit(v, Some(*to)))
+            }
+            NumericExpression::DecimalWithMultipleUnits(values) => {
+                // it is ok to convert only one of the values
+                let mut res = Vec::new();
+
+                for (n, u) in values {
+                    if let Some(c) = u.conversion(n, to) {
+                        res.push((c, *to))
+                    };
+                }
+
+                if res.is_empty() {
+                    Err(ComputeError::OperatorsConversionError(
+                        vec![self.clone()],
+                        vec![values.iter().map(|v| v.1).collect()],
+                    ))
+                } else if res.len() == 1 {
+                    Ok(NumericExpression::DecimalWithUnit(res[0].0, res[0].1))
+                } else {
+                    Ok(NumericExpression::DecimalWithMultipleUnits(res))
+                }
             }
         }
     }
@@ -72,6 +110,14 @@ impl Display for NumericExpression {
             NumericExpression::DecimalWithUnit(n, u) => {
                 write!(f, "{}{}", n, u.to_string_with_plural(n))
             }
+            NumericExpression::DecimalWithMultipleUnits(values) => {
+                let values = values
+                    .iter()
+                    .map(|v| format!("{}{}", v.0, v.1.to_string_with_plural(&v.0)))
+                    .unique()
+                    .join("|");
+                write!(f, "{}", values)
+            }
         }
     }
 }
@@ -84,7 +130,7 @@ pub enum ExpressionToken {
     Numeric(NumericExpression),
     List(Vec<Expression>),
     Expression(Expression),
-    ConversionChain(Vec<UnitDefinition>), // vector of unit conversions
+    ConversionChain(Vec<Vec<Unit>>), // vector of unit conversions
 }
 
 #[derive(Debug, Clone)]
@@ -143,7 +189,10 @@ impl Display for Expression {
                             f,
                             "{}{}",
                             CONVERSION_CHARACTER,
-                            unit.to_string_with_plural(&Decimal::ZERO)
+                            unit.iter()
+                                .map(|u| u.to_string_with_plural(&Decimal::ZERO))
+                                .unique()
+                                .join("|")
                         )?;
                     }
                 }

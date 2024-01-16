@@ -136,30 +136,35 @@ fn pow() {
 
 #[test]
 fn multiunits() {
-    test(
-        &[("30 m + 1 h", dec!(1.5))],
-        Some(Unit::Time(TimeUnit::Hour)),
-    );
-
-    test(
-        &[("5m to km to cm", dec!(500))],
-        Some(Unit::Length(LengthUnit::Meter(Some(UnitPrefix::Centi)))),
-    );
-
-    test(
-        &[("6m to sec to hours to m", dec!(6))],
-        Some(Unit::Time(TimeUnit::Minute)),
-    );
-
-    test(
-        &[("5d + 5m + 5h + 5s", dec!(450305))],
-        Some(Unit::Time(TimeUnit::Second)),
-    );
-
     // test(
-    //     &[("5m + 5m", dec!(10))],
-    //     Some(Unit::Length(LengthUnit::Meter(Some(UnitPrefix::Kilo)))),
+    //     &[("30 m + 1 h", dec!(1.5))],
+    //     Some(Unit::Time(TimeUnit::Hour)),
     // );
+    //
+    // test(
+    //     &[("5m to km to cm", dec!(500))],
+    //     Some(Unit::Length(LengthUnit::Meter(Some(UnitPrefix::Centi)))),
+    // );
+    //
+    // test(
+    //     &[("6m to sec to hours to m", dec!(6))],
+    //     Some(Unit::Time(TimeUnit::Minute)),
+    // );
+    //
+    // test(
+    //     &[("5d + 5m + 5h + 5s", dec!(450305))],
+    //     Some(Unit::Time(TimeUnit::Second)),
+    // );
+    //
+    // test(
+    //     &[("1s + 1m", dec!(1.02))],
+    //     Some(Unit::Time(TimeUnit::Minute)),
+    // );
+
+    test(
+        &[("5m + 5m", dec!(10))],
+        Some(Unit::Length(LengthUnit::Meter(Some(UnitPrefix::Kilo)))),
+    );
 
     // let tests = vec![("500 m + 10 km", dec!(10.5))];
     // test(

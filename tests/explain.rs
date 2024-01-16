@@ -45,8 +45,8 @@ fn explain() {
             "min(55 Celsius, 180 Kelvin) into celsius",
             "(min(55°C,180K))→°C",
         ),
-        ("5d + 5m + 5h + 5s", "5d+(5→m)+5h+5s"), // TODO 5m instead 5->m
-        ("5m + 1km", "(5→m)+1km"),
+        ("5d + 5m + 5h + 5s", "5d+5m+5h+5s"),
+        ("5m + 1km", "5m+1km"),
     ];
 
     for test in tests {

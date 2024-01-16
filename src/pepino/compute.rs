@@ -1,5 +1,4 @@
 use crate::expression::{Expression, ExpressionToken, NumericExpression};
-use crate::units::UnitDefinition;
 use crate::utils::flatten_lines;
 use crate::{ComputeError, Unit};
 
@@ -17,30 +16,30 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError
             ExpressionToken::Operator(o) => operator = Some(o),
             ExpressionToken::Function(f) => function = Some(f),
             ExpressionToken::Numeric(n) => {
-                variables.push(*n);
+                variables.push(n.clone());
                 if result.is_none() {
                     // initial result = first operand
-                    result = Some(*n);
+                    result = Some(n.clone());
                 }
 
                 invoke = true;
             }
             ExpressionToken::Expression(ex) => {
                 let n = compute(ex)?;
-                variables.push(n);
+                variables.push(n.clone());
                 if result.is_none() {
                     // initial result = first operand
-                    result = Some(n);
+                    result = Some(n.clone());
                 }
 
                 invoke = true;
             }
             ExpressionToken::Generator(g) => {
-                let n = NumericExpression::new((g.fce)(), None); // Unit: None
-                variables.push(n);
+                let n = NumericExpression::with_unit((g.fce)(), None); // Unit: None
+                variables.push(n.clone());
                 if result.is_none() {
                     // initial result = first operand
-                    result = Some(n);
+                    result = Some(n.clone());
                 }
 
                 invoke = true;
@@ -77,17 +76,17 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError
                 ));
             };
 
-            let n = NumericExpression::new(r, unit);
+            let n = NumericExpression::with_unit(r, unit);
             variables.clear();
-            variables.push(n);
-            result = Some(n);
+            variables.push(n.clone());
+            result = Some(n.clone());
             function = None;
             continue;
         }
 
         // if operation is set
         if let Some(o) = operator {
-            let (converted, unit) = convert_operands(variables.clone(), &UnitDefinition::None)?;
+            let (converted, unit) = convert_operands(variables.clone(), &vec![])?;
             let r = match converted.len() {
                 1 => (o.unary_action)(converted[0].value()),
                 2 => (o.binary_action)(converted[0].value(), converted[1].value()),
@@ -99,26 +98,17 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError
                 }
             }?;
 
-            let n = NumericExpression::new(r, unit);
+            let n = NumericExpression::with_unit(r, unit);
             variables.clear();
-            variables.push(n);
-            result = Some(n);
+            variables.push(n.clone());
+            result = Some(n.clone());
             operator = None;
             continue;
         }
 
         // if conversion chain is set
         if let Some(chain) = conversion_chain {
-            let chain = flatten_lines(
-                &chain
-                    .iter()
-                    .map(|u| match u {
-                        UnitDefinition::None => vec![],
-                        UnitDefinition::Single(u) => vec![*u],
-                        UnitDefinition::Multi(u) => u.clone(),
-                    })
-                    .collect(),
-            );
+            let chain = flatten_lines(chain);
             let mut all_ok = false;
 
             for chain_variant in chain.clone() {
@@ -128,7 +118,7 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError
 
                     let mut ok = true;
                     for unit in chain_variant.clone() {
-                        let Ok(v_converted) = v.convert_to(unit, true) else {
+                        let Ok(v_converted) = v.convert_to(&unit, true) else {
                             ok = false;
                             break;
                         };
@@ -136,7 +126,7 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError
                     }
 
                     if ok {
-                        converted.push(v);
+                        converted.push(v.clone());
                     } else {
                         break;
                     }
@@ -160,7 +150,7 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError
     }
 
     if variables.len() == 1 {
-        result = Some(variables[0])
+        result = Some(variables[0].clone())
     }
 
     // if function is at the end - invoke it with operands
@@ -176,38 +166,70 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError
             ));
         };
 
-        result = Some(NumericExpression::new(r, unit));
+        result = Some(NumericExpression::with_unit(r, unit));
     }
 
     result.ok_or(ComputeError::InvalidExpression(ex.to_string()))
 }
 
+// TODO: do not return unit
 fn convert_operands(
-    operands: Vec<NumericExpression>,
-    unit: &UnitDefinition,
+    variables: Vec<NumericExpression>,
+    to: &[Unit],
 ) -> Result<(Vec<NumericExpression>, Option<Unit>), ComputeError> {
-    let mut unit = unit.clone();
+    let mut to = to.to_vec();
 
-    if unit.is_none() {
+    if to.is_empty() {
         // if fce unit is not set, find last unit from operands
-        for n in operands.iter() {
+        for n in variables.iter() {
             match n {
                 NumericExpression::Decimal(_) => {}
-                NumericExpression::DecimalWithUnit(_, u) => {
-                    unit = UnitDefinition::Single(*u);
+                NumericExpression::DecimalWithUnit(_, u) => to = vec![*u],
+                NumericExpression::DecimalWithMultipleUnits(u) => {
+                    to = u.iter().map(|x| x.1).collect()
                 }
             }
         }
     }
 
-    match unit {
-        UnitDefinition::None => Ok((operands.clone(), None)),
-        UnitDefinition::Single(u) => {
-            let mut ok = true;
-            let mut converted = Vec::with_capacity(operands.len());
+    if !to.is_empty() {
+        // reduce to valid only units
+        let mut valid = Vec::new();
 
-            for operand in operands.iter() {
-                let Ok(v) = operand.convert_to(u, false) else {
+        for u in to.iter() {
+            let mut ok = true;
+
+            for variable in variables.iter() {
+                if let Err(_) = variable.convert_to(u, false) {
+                    ok = false;
+                    break;
+                };
+            }
+
+            if ok {
+                valid.push(*u);
+            }
+        }
+
+        if valid.is_empty() {
+            return Err(ComputeError::OperatorsConversionError(
+                variables.clone(),
+                vec![to],
+            ));
+        }
+
+        to = valid;
+    }
+
+    match to.len() {
+        0 => Ok((variables.clone(), None)),
+        1 => {
+            let mut ok = true;
+            let mut converted = Vec::with_capacity(variables.len());
+            let u = to[0];
+
+            for variable in variables.iter() {
+                let Ok(v) = variable.convert_to(&u, false) else {
                     ok = false;
                     break;
                 };
@@ -219,10 +241,14 @@ fn convert_operands(
             }
 
             Err(ComputeError::OperatorsConversionError(
-                operands.clone(),
+                variables.clone(),
                 vec![vec![u]],
             ))
         }
-        UnitDefinition::Multi(_) => todo!(),
+        _ => {
+            // compute for all in "to"
+            // create result with multiple values
+            todo!()
+        }
     }
 }
