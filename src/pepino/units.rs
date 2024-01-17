@@ -11,7 +11,7 @@ use crate::units_temperature::TemperatureUnit;
 use crate::units_time::TimeUnit;
 use crate::Decimal;
 
-#[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter)]
+#[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Hash)]
 pub enum Unit {
     Temperature(TemperatureUnit),
     Time(TimeUnit),
@@ -32,7 +32,7 @@ impl Unit {
 
         for u in Unit::iter() {
             let abbreviations = u.abbreviations();
-            if let Some(u) = abbreviations.get(name.to_lowercase().as_str()) {
+            if let Some(u) = abbreviations.get(&name.to_lowercase()) {
                 res.push(*u);
             }
         }

@@ -1,8 +1,8 @@
-use crate::expression::NumericExpression;
 use rust_decimal::Decimal;
 use thiserror::Error;
 
 pub use self::calc::Calc;
+pub use self::expression::NumericExpression;
 pub use self::unit_prefixes::UnitPrefix;
 pub use self::units::Unit;
 
@@ -58,5 +58,5 @@ pub enum ComputeError {
     #[error("Unable to convert ${0} {1} to {2}")]
     UnitConversionError(Decimal, String, String),
     #[error("Unable to convert '{0:?}' to unit {1:?}")]
-    OperatorsConversionError(Vec<NumericExpression>, Vec<Vec<Unit>>),
+    OperatorsConversionError(Vec<NumericExpression>, Vec<Vec<Option<Unit>>>),
 }

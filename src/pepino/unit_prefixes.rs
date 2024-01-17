@@ -6,7 +6,7 @@ use strum_macros::EnumIter;
 
 use crate::Decimal;
 
-#[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter)]
+#[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Hash)]
 pub enum UnitPrefix {
     Quetta,
     Ronna,
@@ -81,7 +81,7 @@ impl UnitPrefix {
             UnitPrefix::Deka => vec!["deka", "da"],
             UnitPrefix::Deci => vec!["deci", "d"],
             UnitPrefix::Centi => vec!["centi", "c"],
-            UnitPrefix::Milli => vec!["milli", ","],
+            UnitPrefix::Milli => vec!["milli", "m"],
             UnitPrefix::Micro => vec!["micro", "μ"],
             UnitPrefix::Nano => vec!["nano", "n"],
             UnitPrefix::Pico => vec!["pico", "p"],

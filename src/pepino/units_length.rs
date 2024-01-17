@@ -8,7 +8,7 @@ use crate::unit_prefixes::UnitPrefix;
 use crate::utils::Pluralize;
 use crate::{make_abbreviations, make_abbreviations_with_prefixes, pluralize, string, Unit};
 
-#[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter)]
+#[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Hash)]
 pub enum LengthUnit {
     Meter(Option<UnitPrefix>),
 

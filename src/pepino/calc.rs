@@ -47,7 +47,7 @@ impl Calc {
         {
             let mut line = line.to_owned();
             for r in [" in ", " to ", " into "] {
-                line = line.replace(r, string!(CONVERSION_CHARACTER).as_str())
+                line = line.replace(r, &string!(CONVERSION_CHARACTER))
             }
 
             let compacted_line = line.split_whitespace().collect::<Vec<_>>().join("");

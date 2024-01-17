@@ -1,14 +1,16 @@
 use crate::utils::Pluralize;
-use crate::{make_abbreviations, pluralize, string, Decimal, TemperatureUnit, Unit};
+use crate::{
+    make_abbreviations, make_abbreviations_with_prefixes, pluralize, string, Decimal, LengthUnit,
+    TemperatureUnit, Unit, UnitPrefix,
+};
 use rust_decimal_macros::dec;
 use std::collections::HashMap;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-#[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Default)]
+#[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Hash)]
 pub enum TimeUnit {
-    #[default]
-    Second,
+    Second(Option<UnitPrefix>),
     Minute,
     Hour,
     Day,
@@ -20,8 +22,15 @@ impl TimeUnit {
 
         for t in TimeUnit::iter() {
             abbreviations.extend(match t {
-                TimeUnit::Second => {
-                    make_abbreviations!(t.to_unit(), "s", "second", "seconds", "sec", "secs")
+                TimeUnit::Second(_) => {
+                    make_abbreviations_with_prefixes!(
+                        TimeUnit::Second,
+                        "s",
+                        "second",
+                        "seconds",
+                        "sec",
+                        "secs"
+                    )
                 }
                 TimeUnit::Minute => {
                     make_abbreviations!(t.to_unit(), "m", "minute", "minutes", "min", "mins")
@@ -36,7 +45,8 @@ impl TimeUnit {
 
     pub fn reference_unit_multiplier(self) -> Decimal {
         match self {
-            TimeUnit::Second => dec!(1),
+            TimeUnit::Second(None) => dec!(1),
+            TimeUnit::Second(Some(p)) => p.multiplier(),
             TimeUnit::Minute => dec!(60.0),
             TimeUnit::Hour => dec!(60.0) * dec!(60.0),
             TimeUnit::Day => dec!(24.0) * dec!(60.0) * dec!(60.0),
@@ -45,7 +55,8 @@ impl TimeUnit {
 
     pub fn to_string_with_plural(self, _: &Decimal) -> String {
         match self {
-            TimeUnit::Second => string!("s"),
+            TimeUnit::Second(None) => string!("s"),
+            TimeUnit::Second(Some(p)) => string!(p) + "s",
             TimeUnit::Minute => string!("m"),
             TimeUnit::Hour => string!("h"),
             TimeUnit::Day => string!("d"),
@@ -54,5 +65,11 @@ impl TimeUnit {
 
     pub fn to_unit(self) -> Unit {
         Unit::Time(self)
+    }
+}
+
+impl Default for TimeUnit {
+    fn default() -> Self {
+        TimeUnit::Second(None)
     }
 }

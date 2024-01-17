@@ -5,7 +5,7 @@ use strum_macros::EnumIter;
 use crate::{make_abbreviations, string, Decimal, Unit};
 use strum::IntoEnumIterator;
 
-#[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Default)]
+#[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Default, Hash)]
 pub enum TemperatureUnit {
     DegreesCelsius,
     DegreesFahrenheit,
