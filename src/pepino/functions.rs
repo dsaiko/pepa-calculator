@@ -4,13 +4,13 @@ use std::sync::OnceLock;
 use rust_decimal::MathematicalOps;
 use rust_decimal_macros::dec;
 
-use crate::{string, Decimal, Unit};
+use crate::{string, Decimal};
 
 #[derive(Debug, Clone)]
 pub struct Function {
     pub representation: String,
     pub fce: fn(params: Vec<Decimal>) -> Decimal,
-    pub params_validation: fn(params: Vec<Decimal>) -> bool,
+    pub params_validation: fn(params: &Vec<Decimal>) -> bool,
 }
 
 pub(super) fn functions() -> &'static HashMap<String, Function> {

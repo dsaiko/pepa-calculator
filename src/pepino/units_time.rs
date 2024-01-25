@@ -1,12 +1,12 @@
-use crate::utils::Pluralize;
-use crate::{
-    make_abbreviations, make_abbreviations_with_prefixes, pluralize, string, Decimal, LengthUnit,
-    TemperatureUnit, Unit, UnitPrefix,
-};
-use rust_decimal_macros::dec;
 use std::collections::HashMap;
+
+use rust_decimal_macros::dec;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+
+use crate::{
+    make_abbreviations, make_abbreviations_with_prefixes, string, Decimal, Unit, UnitPrefix,
+};
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Hash)]
 pub enum TimeUnit {

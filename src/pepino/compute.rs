@@ -1,10 +1,10 @@
+use itertools::Itertools;
+use rust_decimal::Decimal;
+
 use crate::expression::{Expression, ExpressionToken, NumericExpression};
 use crate::functions::Function;
 use crate::utils::flatten_lines;
 use crate::{ComputeError, Unit};
-use itertools::Itertools;
-use rust_decimal::Decimal;
-use rust_decimal_macros::dec;
 
 pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError> {
     let mut variables = Vec::new();
@@ -68,29 +68,17 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError
 
         // if function is set
         if let Some(f) = function {
-            // let converted = convert_variables(variables.clone(), &f.unit)?;
-            //
-            // let params = converted.iter().map(|n| n.value()).collect();
-            // let r = if (f.params_validation)(params) {
-            //     (f.fce)(converted.iter().map(|n| n.value()).collect())
-            // } else {
-            //     return Err(ComputeError::InvalidParametersForFunction(
-            //         f.representation.to_owned(),
-            //         format!("{:?}", converted),
-            //     ));
-            // };
-            //
-            // let n = NumericExpression::with_unit(r, None); // TODO
-            // variables.clear();
-            // variables.push(n.clone());
-            // result = Some(n.clone());
-            // function = None;
+            let n = invoke_fce(f, variables.clone())?;
+            variables.clear();
+            variables.push(n.clone());
+            result = Some(n.clone());
+            function = None;
             continue;
         }
 
         // if operation is set
         if let Some(o) = operator {
-            let converted = convert_variables(variables.clone(), &[])?;
+            let (converted, _) = convert_variables(variables.clone())?;
 
             let n = match converted.len() {
                 1 => invoke_unary(o.unary_action, &converted[0]),
@@ -213,20 +201,13 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError
 
 fn convert_variables(
     variables: Vec<NumericExpression>,
-    to: &[Unit],
-) -> Result<Vec<NumericExpression>, ComputeError> {
-    let mut to = to.to_vec();
+) -> Result<(Vec<NumericExpression>, Vec<Unit>), ComputeError> {
+    let mut to: Vec<Unit> = Vec::new();
 
-    if to.is_empty() {
-        // if fce unit is not set, find last unit from operands
-        for n in variables.iter() {
-            match n {
-                NumericExpression::Number(_) => {}
-                NumericExpression::NumberWithUnit(_, u) => to = vec![*u],
-                NumericExpression::MultipleNumbersWithUnit(u) => {
-                    to = u.iter().map(|x| x.1).filter_map(|x| x).collect()
-                }
-            }
+    for n in variables.iter() {
+        let units: Vec<_> = n.units().iter().flatten().copied().collect();
+        if !units.is_empty() {
+            to = units
         }
     }
 
@@ -238,7 +219,7 @@ fn convert_variables(
             let mut ok = true;
 
             for variable in variables.iter() {
-                if let Err(_) = variable.convert_to(u, false) {
+                if variable.convert_to(u, false).is_err() {
                     ok = false;
                     break;
                 };
@@ -260,7 +241,7 @@ fn convert_variables(
     }
 
     match to.len() {
-        0 => Ok(variables.clone()),
+        0 => Ok((variables.clone(), to)),
         1 => {
             let mut ok = true;
             let mut converted = Vec::with_capacity(variables.len());
@@ -275,7 +256,7 @@ fn convert_variables(
             }
 
             if ok {
-                return Ok(converted);
+                return Ok((converted, to));
             }
 
             Err(ComputeError::OperatorsConversionError(
@@ -301,7 +282,7 @@ fn convert_variables(
                         return Err(ComputeError::OperatorsConversionError(
                             variables.clone(),
                             vec![to.iter().map(|x| Some(*x)).collect()],
-                        ))
+                        ));
                     }
                     1 => {
                         converted.push(NumericExpression::with_unit(res[0].0, res[0].1));
@@ -312,7 +293,7 @@ fn convert_variables(
                 }
             }
 
-            Ok(converted)
+            Ok((converted, to))
         }
     }
 }
@@ -373,17 +354,46 @@ fn invoke_fce(
     f: &Function,
     variables: Vec<NumericExpression>,
 ) -> Result<NumericExpression, ComputeError> {
-    // let converted = convert_variables(variables.clone(), &f.unit)?;
-    //
-    // let params = converted.iter().map(|n| n.value()).collect();
-    // let r = if (f.params_validation)(params) {
-    //     (f.fce)(converted.iter().map(|n| n.value()).collect())
-    // } else {
-    //     return Err(ComputeError::InvalidParametersForFunction(
-    //         f.representation.to_owned(),
-    //         format!("{:?}", converted),
-    //     ));
-    // };
+    let (converted, _) = convert_variables(variables.clone())?;
+    let converted = converted.iter().map(|x| x.values()).collect::<Vec<_>>();
 
-    todo!()
+    // create combination of arguments
+    let lines = flatten_lines(&converted)
+        .iter()
+        .map(|v| {
+            v.iter()
+                .map(|(n, u)| NumericExpression::with_unit(*n, *u))
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+
+    let mut res = Vec::new();
+
+    for line in lines {
+        // validate line
+        if let Ok((converted_line, units)) = convert_variables(line.clone()) {
+            let params = converted_line.iter().map(|n| n.values()[0].0).collect();
+            let n = if (f.params_validation)(&params) {
+                (f.fce)(params)
+            } else {
+                return Err(ComputeError::InvalidParametersForFunction(
+                    f.representation.to_owned(),
+                    format!("{:?}", converted),
+                ));
+            };
+
+            res.push((n, units.first().cloned()))
+        }
+    }
+
+    res = res.iter().unique().copied().collect();
+
+    if res.is_empty() {
+        return Err(ComputeError::InvalidParametersForFunction(
+            f.representation.to_owned(),
+            format!("{:?}", converted),
+        ));
+    }
+
+    Ok(NumericExpression::with_multiple_units(res))
 }

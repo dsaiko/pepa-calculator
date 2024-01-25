@@ -5,7 +5,6 @@ use crate::generators::generators;
 use crate::operators::{operators, Priority, CONVERSION_CHARACTER};
 use crate::utils::split_string_by_comma;
 use crate::{Decimal, ParserError, Unit};
-use itertools::Itertools;
 
 pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
     let mut expression = Expression::new();
@@ -230,9 +229,8 @@ pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
     {
         let mut prioritized = Expression::new();
         let mut buff2 = Vec::new();
-        let mut tokens = expression.tokens.into_iter();
 
-        while let Some(e) = tokens.next() {
+        for e in expression.tokens.into_iter() {
             buff2.push(e.clone());
 
             if buff2.len() == 2 {

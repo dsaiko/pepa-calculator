@@ -133,10 +133,71 @@ fn time() {
 }
 
 #[test]
-fn pow() {
-    let unit = Some(Unit::Time(TimeUnit::Hour));
+fn functions() {
+    test("(5 h) ^ 2", &[(dec!(25), Some(Unit::Time(TimeUnit::Hour)))]);
+    test(
+        "(5 m) ^ 2",
+        &[
+            (dec!(25), Some(Unit::Time(TimeUnit::Minute))),
+            (dec!(25), Some(Unit::Length(LengthUnit::Meter(None)))),
+        ],
+    );
+    test(
+        "(5 m) ^ 2 + 1m",
+        &[
+            (dec!(26), Some(Unit::Time(TimeUnit::Minute))),
+            (dec!(26), Some(Unit::Length(LengthUnit::Meter(None)))),
+        ],
+    );
+    test(
+        "((5 m) ^ 2 + 1km) in meters",
+        &[(dec!(1025), Some(Unit::Length(LengthUnit::Meter(None))))],
+    );
 
-    test("pow(5 hours, 2 hours)", &[(dec!(25), unit)]);
+    test(
+        "min(5 m, 4m, 1)",
+        &[
+            (dec!(1), Some(Unit::Time(TimeUnit::Minute))),
+            (dec!(1), Some(Unit::Length(LengthUnit::Meter(None)))),
+        ],
+    );
+
+    test(
+        "min(5 m, 4m)",
+        &[
+            (dec!(4), Some(Unit::Time(TimeUnit::Minute))),
+            (dec!(4), Some(Unit::Length(LengthUnit::Meter(None)))),
+        ],
+    );
+
+    test(
+        "max(5 m, 4m, 1km)",
+        &[(
+            dec!(1),
+            Some(Unit::Length(LengthUnit::Meter(Some(UnitPrefix::Kilo)))),
+        )],
+    );
+
+    test(
+        "max(5 m, 4m, 6m)",
+        &[
+            (dec!(6), Some(Unit::Time(TimeUnit::Minute))),
+            (dec!(6), Some(Unit::Length(LengthUnit::Meter(None)))),
+        ],
+    );
+
+    test(
+        "max(500 m, 4m, 6m) in km",
+        &[(
+            dec!(0.5),
+            Some(Unit::Length(LengthUnit::Meter(Some(UnitPrefix::Kilo)))),
+        )],
+    );
+
+    test(
+        "pow(60 m, 1 hour)",
+        &[(dec!(1), Some(Unit::Time(TimeUnit::Hour)))],
+    );
 }
 
 #[test]

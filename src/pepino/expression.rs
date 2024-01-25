@@ -1,5 +1,6 @@
-use itertools::Itertools;
 use std::fmt::{Display, Formatter};
+
+use itertools::Itertools;
 
 use crate::functions::Function;
 use crate::generators::Generator;
@@ -57,23 +58,21 @@ impl NumericExpression {
         force_unit: bool,
     ) -> Result<NumericExpression, ComputeError> {
         match self {
-            NumericExpression::Number(n) => {
-                return Ok(if force_unit {
-                    NumericExpression::with_unit(*n, Some(*to))
-                } else {
-                    NumericExpression::with_unit(*n, None)
-                })
-            }
+            NumericExpression::Number(n) => Ok(if force_unit {
+                NumericExpression::with_unit(*n, Some(*to))
+            } else {
+                NumericExpression::with_unit(*n, None)
+            }),
             NumericExpression::NumberWithUnit(n, u) => {
                 if *u == *to {
                     return Ok(self.clone());
                 }
 
-                let Some(v) = u.conversion(n, &to) else {
+                let Some(v) = u.conversion(n, to) else {
                     return Err(ComputeError::UnitConversionError(
                         *n,
-                        u.to_string_with_plural(&n),
-                        to.to_string_with_plural(&n),
+                        u.to_string_with_plural(n),
+                        to.to_string_with_plural(n),
                     ));
                 };
 

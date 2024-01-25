@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
-use pepino::{Calc, ComputeError, NumericExpression};
+use pepino::Calc;
 
 fn test(tests: &[(&str, Decimal)]) {
     for test in tests {
