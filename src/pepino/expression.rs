@@ -47,6 +47,10 @@ impl NumericExpression {
         }
     }
 
+    pub fn units(&self) -> Vec<Option<Unit>> {
+        self.values().iter().map(|(_, u)| *u).collect()
+    }
+
     pub fn convert_to(
         &self,
         to: &Unit,

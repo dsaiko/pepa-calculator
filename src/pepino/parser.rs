@@ -1,6 +1,6 @@
 use crate::constants::constants;
 use crate::expression::{Expression, ExpressionToken, NumericExpression};
-use crate::functions::{function_names, functions, Function};
+use crate::functions::{function_names, functions};
 use crate::generators::generators;
 use crate::operators::{operators, Priority, CONVERSION_CHARACTER};
 use crate::utils::split_string_by_comma;
@@ -174,49 +174,7 @@ pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
 
     expression = normalized;
 
-    // prioritize unit conversion functions
-    {
-        let mut prioritized = Expression::new();
-        let mut buff2 = Vec::new();
-
-        for e in expression.tokens {
-            buff2.push(e.clone());
-
-            if buff2.len() == 2 {
-                let mut priority_group = false;
-                // check if second element is function
-                if let ExpressionToken::Function(f) = &buff2[1] {
-                    if !f.unit.is_empty() {
-                        // only unit conversions
-                        match buff2[0] {
-                            ExpressionToken::Operator(_) => {}
-                            ExpressionToken::Function(_) => priority_group = true,
-                            ExpressionToken::Generator(_) => priority_group = true,
-                            ExpressionToken::Numeric(_) => priority_group = true,
-                            ExpressionToken::List(_) => {}
-                            ExpressionToken::Expression(_) => priority_group = true,
-                            ExpressionToken::ConversionChain(_) => priority_group = true,
-                        }
-                    }
-                }
-
-                if priority_group {
-                    buff2 = vec![ExpressionToken::Expression(Expression::from_tokens(buff2))];
-                } else {
-                    prioritized.push(buff2[0].clone());
-                    // shift buff2 - remove head
-                    buff2 = vec![buff2[1].clone()];
-                }
-            }
-        }
-
-        // append rest from buff2
-        for t in buff2 {
-            prioritized.push(t);
-        }
-
-        expression = prioritized;
-    }
+    // TODO: simplify this mess
 
     // prioritize functions
     {
@@ -268,33 +226,26 @@ pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {
         expression = prioritized;
     }
 
-    // prioritize unit conversion functions once again ... :/
+    // prioritize conversion chains
     {
         let mut prioritized = Expression::new();
         let mut buff2 = Vec::new();
+        let mut tokens = expression.tokens.into_iter();
 
-        for e in expression.tokens {
+        while let Some(e) = tokens.next() {
             buff2.push(e.clone());
 
             if buff2.len() == 2 {
-                let mut priority_group = false;
-                // check if second element is function
-                if let ExpressionToken::Function(f) = &buff2[1] {
-                    if !f.unit.is_empty() {
-                        // only unit conversions
-                        match buff2[0] {
-                            ExpressionToken::Operator(_) => {}
-                            ExpressionToken::Function(_) => priority_group = true,
-                            ExpressionToken::Generator(_) => priority_group = true,
-                            ExpressionToken::Numeric(_) => priority_group = true,
-                            ExpressionToken::List(_) => {}
-                            ExpressionToken::Expression(_) => priority_group = true,
-                            ExpressionToken::ConversionChain(_) => priority_group = true,
-                        }
-                    }
-                }
-
-                if priority_group {
+                // check if second element is a conversion chain
+                if matches!(buff2[1], ExpressionToken::ConversionChain(_))
+                    && !matches!(buff2[0], ExpressionToken::Operator(_))
+                {
+                    buff2 = vec![ExpressionToken::Expression(Expression::from_tokens(buff2))];
+                } else if matches!(buff2[0], ExpressionToken::ConversionChain(_))
+                    && !matches!(buff2[1], ExpressionToken::Operator(_))
+                {
+                    // celsius(55)
+                    buff2.reverse();
                     buff2 = vec![ExpressionToken::Expression(Expression::from_tokens(buff2))];
                 } else {
                     prioritized.push(buff2[0].clone());
@@ -453,25 +404,5 @@ fn parse_token(token: &str) -> Result<ExpressionToken, ParserError> {
         ])));
     };
 
-    if units.len() == 1 {
-        // only units, treat it as a conversion functions
-        let f = Function {
-            representation: format!(
-                "{}{}",
-                CONVERSION_CHARACTER,
-                units[0]
-                    .iter()
-                    .map(|u| u.to_string_with_plural(&Decimal::ZERO))
-                    .unique()
-                    .join("|")
-            ),
-            fce: |params| params[0],
-            params_validation: |params| params.len() == 1,
-            unit: units[0].clone(),
-        };
-
-        Ok(ExpressionToken::Function(f))
-    } else {
-        Ok(ExpressionToken::ConversionChain(units))
-    }
+    Ok(ExpressionToken::ConversionChain(units))
 }

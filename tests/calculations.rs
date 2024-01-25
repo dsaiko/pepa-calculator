@@ -16,7 +16,7 @@ fn test(tests: &[(&str, Decimal)]) {
             }
             Ok(n) => {
                 // round v
-                let v = (n.value() * dec!(10.0)).round() / dec!(10.0);
+                let v = (n.values()[0].0 * dec!(10.0)).round() / dec!(10.0);
                 if v != test.1 {
                     panic!("{:?}: {:?} != {:?}", test.0, v, test.1);
                 }
@@ -207,7 +207,7 @@ fn random() {
                 panic!("Error: {:?}", e);
             }
             Ok(n) => {
-                numbers.insert(n.value());
+                numbers.insert(n.values()[0].0);
             }
         }
     }

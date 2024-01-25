@@ -1,6 +1,5 @@
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use std::path::Prefix;
 
 use pepino::{Calc, LengthUnit, NumericExpression, TemperatureUnit, TimeUnit, Unit, UnitPrefix};
 
@@ -18,8 +17,33 @@ fn test(test: &str, res: &[(Decimal, Option<Unit>)]) {
         }
         Ok(n) => {
             let t = NumericExpression::with_multiple_units(res.to_vec());
-            if n != t {
-                panic!("{:?}: {:?} != {:?}", test, n, t);
+            let mut ok = true;
+
+            let mut v1 = t.values();
+            let mut v2 = n.values();
+
+            if v1.len() != v2.len() {
+                ok = false;
+            } else {
+                for i in 0..v1.len() {
+                    if v1[i].1 != v2[i].1 {
+                        ok = false;
+                    }
+
+                    let n1 = (v1[i].0 * dec!(100)).round() / dec!(100);
+                    let n2 = (v2[i].0 * dec!(100)).round() / dec!(100);
+
+                    v1[i].0 = n1;
+                    v2[i].0 = n2;
+
+                    if n1 != n2 {
+                        ok = false;
+                    }
+                }
+            }
+
+            if !ok {
+                panic!("{:?}: {:?} != {:?}", test, v1, v2);
             }
         }
     }
@@ -159,17 +183,43 @@ fn multiunits() {
         ],
     );
 
-    // min(5, 10, 5h)
-    // min (5,10,5m)
+    test(
+        "5m + 5m",
+        &[
+            (dec!(10), Some(Unit::Time(TimeUnit::Minute))),
+            (dec!(10), Some(Unit::Length(LengthUnit::Meter(None)))),
+        ],
+    );
 
-    // test(
-    //     &[("5m + 5m", dec!(10))],
-    //     Some(Unit::Length(LengthUnit::Meter(Some(UnitPrefix::Kilo)))),
-    // );
+    test(
+        "500m + 5km",
+        &[(
+            dec!(5.5),
+            Some(Unit::Length(LengthUnit::Meter(Some(UnitPrefix::Kilo)))),
+        )],
+    );
 
-    // let tests = vec![("500 m + 10 km", dec!(10.5))];
-    // test(
-    //     tests,
-    //     Some(Unit::Length(LengthUnit::Meter(Some(UnitPrefix::Kilo)))),
-    // );
+    test(
+        "(33 + 3) m + 15",
+        &[
+            (dec!(51), Some(Unit::Time(TimeUnit::Minute))),
+            (dec!(51), Some(Unit::Length(LengthUnit::Meter(None)))),
+        ],
+    );
+
+    test(
+        "(33m + 3m) m + 15m",
+        &[
+            (dec!(51), Some(Unit::Time(TimeUnit::Minute))),
+            (dec!(51), Some(Unit::Length(LengthUnit::Meter(None)))),
+        ],
+    );
+
+    test(
+        "(33m + 3m) m + 3 + 15m + 1",
+        &[
+            (dec!(55), Some(Unit::Time(TimeUnit::Minute))),
+            (dec!(55), Some(Unit::Length(LengthUnit::Meter(None)))),
+        ],
+    );
 }

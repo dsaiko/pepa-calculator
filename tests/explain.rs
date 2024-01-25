@@ -26,7 +26,7 @@ fn explain() {
         ("55 celsius", "55°C"),
         ("5 * 55 celsius + 3 Kelvins", "(5*55°C)+3K"),
         ("5 * celsius 55 + 3 Kelvins", "(5*55°C)+3K"),
-        ("celsius(55)", "→°C55"),
+        ("celsius(55)", "55→°C"),
         ("15 fahrenheits + 3 celsius", "15°F+3°C"),
         (
             "15 fahrenheits + 3 kelvins + 2 * 20 celsius",
@@ -47,6 +47,12 @@ fn explain() {
         ),
         ("5d + 5m + 5h + 5s", "5d+5m+5h+5s"),
         ("5m + 1km", "5m+1km"),
+        (
+            "(5 days + 1 hour + (60 * 30) seconds + 15 min) in hours",
+            "(5d+1h+((60*30)→s)+15m)→h",
+        ),
+        ("celsius((33 + 3) kelvins)", "((33+3)→K)→°C"),
+        ("10 * celsius(5 + 5)", "10*((5+5)→°C)"),
     ];
 
     for test in tests {

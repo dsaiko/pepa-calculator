@@ -1,9 +1,10 @@
 use crate::expression::{Expression, ExpressionToken, NumericExpression};
+use crate::functions::Function;
 use crate::utils::flatten_lines;
-use crate::LengthUnit::Parsec;
 use crate::{ComputeError, Unit};
 use itertools::Itertools;
 use rust_decimal::Decimal;
+use rust_decimal_macros::dec;
 
 pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError> {
     let mut variables = Vec::new();
@@ -111,6 +112,45 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError
 
         // if conversion chain is set
         if let Some(chain) = conversion_chain {
+            if variables.len() == 1 {
+                let chain = flatten_lines(chain);
+                let mut values = Vec::new();
+
+                for chain_variant in chain.clone() {
+                    let mut v = variables[0].clone();
+
+                    let mut ok = true;
+                    for unit in chain_variant.clone() {
+                        let Ok(v_converted) = v.convert_to(&unit, true) else {
+                            ok = false;
+                            break;
+                        };
+                        v = v_converted;
+                    }
+
+                    if ok {
+                        values.extend(v.values());
+                    }
+                }
+
+                if values.is_empty() {
+                    return Err(ComputeError::OperatorsConversionError(
+                        variables,
+                        chain
+                            .iter()
+                            .map(|x| x.iter().map(|x| Some(*x)).collect())
+                            .collect(),
+                    ));
+                }
+
+                variables = vec![NumericExpression::with_multiple_units(values)];
+
+                conversion_chain = None;
+                continue;
+            }
+
+            // convert multiple variables in chain
+
             let chain = flatten_lines(chain);
             let mut all_ok = false;
 
@@ -164,18 +204,8 @@ pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError
 
     // if function is at the end - invoke it with operands
     if let Some(f) = function {
-        // let converted = convert_variables(variables.clone(), &f.unit)?;
-        // let params = converted.iter().map(|n| n.value()).collect();
-        // let r = if (f.params_validation)(params) {
-        //     (f.fce)(converted.iter().map(|n| n.value()).collect())
-        // } else {
-        //     return Err(ComputeError::InvalidParametersForFunction(
-        //         f.representation.to_owned(),
-        //         format!("{:?}", converted),
-        //     ));
-        // };
-        //
-        // result = Some(NumericExpression::with_unit(r, None)); // TODOs
+        let r = invoke_fce(f, variables)?;
+        result = Some(r);
     }
 
     result.ok_or(ComputeError::InvalidExpression(ex.to_string()))
@@ -319,11 +349,7 @@ fn invoke_binary(
                     None => res.push((f(n1, n2)?, Some(u1))),
                     Some(u2) => {
                         let Some(n1) = u1.conversion(&n1, &u2) else {
-                            return Err(ComputeError::UnitConversionError(
-                                n1,
-                                u1.to_string_with_plural(&Decimal::ZERO),
-                                u2.to_string_with_plural(&Decimal::ZERO),
-                            ));
+                            continue;
                         };
                         res.push((f(n1, n2)?, Some(u2)));
                     }
@@ -332,6 +358,32 @@ fn invoke_binary(
         }
     }
 
+    if res.is_empty() {
+        return Err(ComputeError::OperatorsConversionError(
+            vec![p1.clone(), p2.clone()],
+            vec![p1.units(), p2.units()],
+        ));
+    }
+
     res = res.iter().unique().copied().collect();
     Ok(NumericExpression::with_multiple_units(res))
+}
+
+fn invoke_fce(
+    f: &Function,
+    variables: Vec<NumericExpression>,
+) -> Result<NumericExpression, ComputeError> {
+    // let converted = convert_variables(variables.clone(), &f.unit)?;
+    //
+    // let params = converted.iter().map(|n| n.value()).collect();
+    // let r = if (f.params_validation)(params) {
+    //     (f.fce)(converted.iter().map(|n| n.value()).collect())
+    // } else {
+    //     return Err(ComputeError::InvalidParametersForFunction(
+    //         f.representation.to_owned(),
+    //         format!("{:?}", converted),
+    //     ));
+    // };
+
+    todo!()
 }

@@ -11,7 +11,6 @@ pub struct Function {
     pub representation: String,
     pub fce: fn(params: Vec<Decimal>) -> Decimal,
     pub params_validation: fn(params: Vec<Decimal>) -> bool,
-    pub unit: Vec<Unit>,
 }
 
 pub(super) fn functions() -> &'static HashMap<String, Function> {
@@ -26,61 +25,51 @@ pub(super) fn functions() -> &'static HashMap<String, Function> {
                 params_validation: |params| {
                     params.len() == 1 && !params.iter().any(|v| *v < dec!(0))
                 },
-                unit: vec![],
             },
             Function {
                 representation: string!("sqr"),
                 fce: |params| params[0].powu(2),
                 params_validation: |params| params.len() == 1,
-                unit: vec![],
             },
             Function {
                 representation: string!("round"),
                 fce: |params| params[0].round(),
                 params_validation: |params| params.len() == 1,
-                unit: vec![],
             },
             Function {
                 representation: string!("trunc"),
                 fce: |params| params[0].trunc(),
                 params_validation: |params| params.len() == 1,
-                unit: vec![],
             },
             Function {
                 representation: string!("fract"),
                 fce: |params| params[0].fract(),
                 params_validation: |params| params.len() == 1,
-                unit: vec![],
             },
             Function {
                 representation: string!("floor"),
                 fce: |params| params[0].floor(),
                 params_validation: |params| params.len() == 1,
-                unit: vec![],
             },
             Function {
                 representation: string!("ceil"),
                 fce: |params| params[0].ceil(),
                 params_validation: |params| params.len() == 1,
-                unit: vec![],
             },
             Function {
                 representation: string!("sin"),
                 fce: |params| params[0].sin(),
                 params_validation: |params| params.len() == 1,
-                unit: vec![],
             },
             Function {
                 representation: string!("cos"),
                 fce: |params| params[0].cos(),
                 params_validation: |params| params.len() == 1,
-                unit: vec![],
             },
             Function {
                 representation: string!("tan"),
                 fce: |params| params[0].tan(),
                 params_validation: |params| params.len() == 1,
-                unit: vec![],
             },
             Function {
                 representation: string!("min"),
@@ -91,7 +80,6 @@ pub(super) fn functions() -> &'static HashMap<String, Function> {
                         .unwrap()
                 },
                 params_validation: |params| !params.is_empty(),
-                unit: vec![],
             },
             Function {
                 representation: string!("max"),
@@ -102,37 +90,31 @@ pub(super) fn functions() -> &'static HashMap<String, Function> {
                         .unwrap()
                 },
                 params_validation: |params| !params.is_empty(),
-                unit: vec![],
             },
             Function {
                 representation: string!("ln"),
                 fce: |params| params[0].ln(),
                 params_validation: |params| params.len() == 1,
-                unit: vec![],
             },
             Function {
                 representation: string!("log"),
                 fce: |params| params[0].log10(),
                 params_validation: |params| params.len() == 1,
-                unit: vec![],
             },
             Function {
                 representation: string!("pow"),
                 fce: |params| params[0].powd(params[1]),
                 params_validation: |params| params.len() == 2,
-                unit: vec![],
             },
             Function {
                 representation: string!("sum"),
                 fce: |params| params.iter().sum(),
                 params_validation: |params| !params.is_empty(),
-                unit: vec![],
             },
             Function {
                 representation: string!("average"),
                 fce: |params| params.iter().sum::<Decimal>() / Decimal::from(params.len()),
                 params_validation: |params| !params.is_empty(),
-                unit: vec![],
             },
             Function {
                 representation: string!("median"),
@@ -149,13 +131,11 @@ pub(super) fn functions() -> &'static HashMap<String, Function> {
                     }
                 },
                 params_validation: |params| !params.is_empty(),
-                unit: vec![],
             },
             Function {
                 representation: string!("count"),
                 fce: |params| params.len().into(),
                 params_validation: |params| !params.is_empty(),
-                unit: vec![],
             },
         ] {
             functions.insert(function.representation.clone(), function);
