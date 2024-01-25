@@ -7,15 +7,14 @@ fn test(test: &str, res: &[(Decimal, Option<Unit>)]) {
     let mut computer = Calc::default();
     let statement = computer.compute(test).unwrap();
 
-    if let Err(e) = statement.expression {
+    if let Err(e) = &statement.expression {
         panic!("Error in expression: '{:?}': {:?}", test, e);
     }
 
-    match statement.result {
-        Err(e) => {
-            panic!("Error in computation: '{:?}': {:?}", test, e);
-        }
-        Ok(n) => {
+    match &statement.result {
+        None => panic!("No result for: '{:?}'", test),
+        Some(Err(e)) => panic!("Error in computation: '{:?}': {:?}", test, e),
+        Some(Ok(n)) => {
             let t = NumericExpression::with_multiple_units(res.to_vec());
             let mut ok = true;
 
@@ -141,7 +140,7 @@ fn pow() {
 }
 
 #[test]
-fn multiunits() {
+fn multi_units() {
     test(
         "30 m + 1 h",
         &[(dec!(1.5), Some(Unit::Time(TimeUnit::Hour)))],

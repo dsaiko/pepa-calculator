@@ -57,7 +57,7 @@ fn explain() {
 
     for test in tests {
         let mut computer = Calc::default();
-        let statement = computer.compute(test.0).unwrap();
+        let statement = computer.prepare_statements(test.0).unwrap();
         let expression = statement.expression.as_ref().unwrap().clone();
         let actual = expression.explain();
         if actual != test.1 {

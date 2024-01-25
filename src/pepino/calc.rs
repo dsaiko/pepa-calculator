@@ -11,7 +11,7 @@ use crate::{string, ComputeError, ParserError};
 pub struct Statement {
     pub request: String,
     pub expression: Result<Expression, ParserError>,
-    pub result: Result<NumericExpression, ComputeError>,
+    pub result: Option<Result<NumericExpression, ComputeError>>,
 }
 
 pub struct Calc {
@@ -37,9 +37,7 @@ impl Calc {
         *self = Calc::new();
     }
 
-    pub fn compute(&mut self, statement: &str) -> Option<Statement> {
-        let mut last_statement = None;
-
+    fn prepare(&mut self, statement: &str) {
         for line in statement
             .lines()
             .map(|line| line.trim())
@@ -53,29 +51,33 @@ impl Calc {
             let compacted_line = line.split_whitespace().collect::<Vec<_>>().join("");
 
             let expression = parse(&compacted_line);
-            let Ok(expression) = expression else {
-                let statement = Statement {
-                    request: line.to_owned(),
-                    expression,
-                    result: Err(InvalidExpression(line.to_owned())),
-                };
-
-                last_statement = Some(statement.clone());
-                self.statements.push(statement);
-                continue;
-            };
-
-            let result = compute(&expression);
-
             let statement = Statement {
                 request: line.to_owned(),
-                expression: Ok(expression),
-                result,
+                expression,
+                result: None,
             };
-            last_statement = Some(statement.clone());
             self.statements.push(statement);
         }
+    }
 
-        last_statement
+    pub fn compute(&mut self, statement: &str) -> Option<&Statement> {
+        self.prepare(statement);
+
+        for s in self.statements.iter_mut() {
+            if s.result.is_none() {
+                if let Ok(e) = &s.expression {
+                    s.result = Some(compute(e));
+                } else {
+                    s.result = Some(Err(InvalidExpression(string!(s.request))));
+                }
+            }
+        }
+
+        self.statements.last()
+    }
+
+    pub fn prepare_statements(&mut self, statement: &str) -> Option<&Statement> {
+        self.prepare(statement);
+        self.statements.last()
     }
 }

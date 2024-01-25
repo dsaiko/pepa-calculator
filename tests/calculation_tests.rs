@@ -3,18 +3,17 @@ use std::collections::HashSet;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
-use pepino::Calc;
+use pepino::{Calc, ComputeError, NumericExpression};
 
 fn test(tests: &[(&str, Decimal)]) {
     for test in tests {
         let mut computer = Calc::default();
         let statement = computer.compute(test.0).unwrap();
 
-        match statement.result {
-            Err(e) => {
-                panic!("Error in '{:?}': {:?}", test.0, e);
-            }
-            Ok(n) => {
+        match &statement.result {
+            None => panic!("No result: '{:?}'", test.0),
+            Some(Err(e)) => panic!("Error in '{:?}': {:?}", test.0, e),
+            Some(Ok(n)) => {
                 // round v
                 let v = (n.values()[0].0 * dec!(10.0)).round() / dec!(10.0);
                 if v != test.1 {
@@ -29,7 +28,7 @@ fn test_errors(tests: &[&str]) {
     for test in tests {
         let mut computer = Calc::default();
         let statement = computer.compute(test).unwrap();
-        if let Ok(result) = &statement.result {
+        if let Some(Ok(result)) = &statement.result {
             panic!("{:?} = {:?} expected to yield no result.", test, result)
         }
     }
@@ -202,13 +201,8 @@ fn random() {
         let mut computer = Calc::default();
         let statement = computer.compute("trunc(random() * 100000)").unwrap();
 
-        match statement.result {
-            Err(e) => {
-                panic!("Error: {:?}", e);
-            }
-            Ok(n) => {
-                numbers.insert(n.values()[0].0);
-            }
+        if let Some(Ok(n)) = &statement.result {
+            numbers.insert(n.values()[0].0);
         }
     }
 
