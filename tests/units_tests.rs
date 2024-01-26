@@ -1,7 +1,7 @@
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
-use pepino::{Calc, LengthUnit, NumericExpression, TemperatureUnit, TimeUnit, Unit, UnitPrefix};
+use pepa::{Calc, LengthUnit, NumericExpression, TemperatureUnit, TimeUnit, Unit, UnitPrefix};
 
 fn test(test: &str, res: &[(Decimal, Option<Unit>)]) {
     let mut computer = Calc::default();

@@ -1,4 +1,4 @@
-use pepino::Calc;
+use pepa::Calc;
 
 #[test]
 fn explain() {

@@ -1,21 +1,21 @@
 [package]
-name = "pepino"
+name = "pepa-calculator"
 description = "Text based calculator and unit convertor"
 edition = "2021"
 publish = false
 version = "0.1.0"
 authors = ["Dusan Saiko <dusan@saiko.cz>"]
 license = "MIT"
-repository = "https://github.com/dsaiko/pepino"
-keywords = ["calculator", "calc"]
+repository = "https://github.com/dsaiko/pepa-calculator"
+keywords = ["calculator", "calc", "unit_convertor"]
 categories = ["algorithms", "mathematics", "command-line-utilities"]
 
 [lib]
-name = "pepino"
-path = "src/pepino/lib.rs"
+name = "pepa"
+path = "src/pepa/lib.rs"
 
 [[bin]]
-name = "pepino"
+name = "pc"
 path = "src/main.rs"
 
 [dependencies]

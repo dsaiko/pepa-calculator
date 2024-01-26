@@ -1,9 +1,8 @@
 use std::collections::HashSet;
 
+use pepa::Calc;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-
-use pepino::Calc;
 
 fn test(tests: &[(&str, Decimal)]) {
     for test in tests {

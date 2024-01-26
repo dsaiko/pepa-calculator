@@ -1,11 +1,11 @@
 # Text based calculator and unit convertor
 
-#### In Memory of my father Josef Saiko (1945-2019), who did love mathematics all his live.
+#### In Memory of my father Josef Saiko (1945-2019), who loved mathematics all his live.
 
-[![Build](https://github.com/dsaiko/pepino/actions/workflows/rust.yml/badge.svg)](https://github.com/dsaiko/pepino/actions)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/dsaiko/pepino)
-[![Cargo](https://img.shields.io/crates/v/pepino.svg)](https://crates.io/crates/pepino)
-[![Documentation](https://docs.rs/pepino/badge.svg)](https://docs.rs/pepino)
+[![Build](https://github.com/dsaiko/pepa-calculator/actions/workflows/rust.yml/badge.svg)](https://github.com/dsaiko/pepa-calculator/actions)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/dsaiko/pepa-calculator)
+[![Cargo](https://img.shields.io/crates/v/pepa-calculator.svg)](https://crates.io/crates/pepa-calculator)
+[![Documentation](https://docs.rs/pepa-calculator/badge.svg)](https://docs.rs/pepa-calculator)
 
 TODO:
 
