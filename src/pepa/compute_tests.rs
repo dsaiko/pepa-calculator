@@ -3,11 +3,11 @@ use std::collections::HashSet;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
-use crate::Calc;
+use crate::Calculator;
 
 fn test_computation(tests: &[(&str, Decimal)]) {
     for test in tests {
-        let mut computer = Calc::default();
+        let mut computer = Calculator::default();
         let statement = computer.compute(test.0).unwrap();
 
         match &statement.result {
@@ -26,7 +26,7 @@ fn test_computation(tests: &[(&str, Decimal)]) {
 
 fn test_errors(tests: &[&str]) {
     for test in tests {
-        let mut computer = Calc::default();
+        let mut computer = Calculator::default();
         let statement = computer.compute(test).unwrap();
         if let Some(Ok(result)) = &statement.result {
             panic!("{:?} = {:?} expected to yield no result.", test, result)
@@ -198,7 +198,7 @@ fn test_ln() {
 fn test_random() {
     let mut numbers = HashSet::new();
     for _ in 0..10 {
-        let mut computer = Calc::default();
+        let mut computer = Calculator::default();
         let statement = computer.compute("trunc(random() * 100000)").unwrap();
 
         if let Some(Ok(n)) = &statement.result {

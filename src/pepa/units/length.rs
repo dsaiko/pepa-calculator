@@ -5,18 +5,17 @@ use rust_decimal_macros::dec;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::{make_abbreviations, make_abbreviations_with_prefixes, pluralize, string, Unit};
-use crate::unit_prefixes::UnitPrefix;
-use crate::units::Abbreviations;
+use crate::units::{Abbreviations, Prefix, Unit};
 use crate::utils::Pluralize;
+use crate::{make_abbreviations, make_abbreviations_with_prefixes, pluralize, string};
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Hash)]
-pub enum LengthUnit {
-    Meter(Option<UnitPrefix>),
+pub enum Length {
+    Meter(Option<Prefix>),
 
     AstronomicalUnit,
     LightYear,
-    Parsec(Option<UnitPrefix>),
+    Parsec(Option<Prefix>),
 
     Thou,
     Barleycorn,
@@ -34,29 +33,29 @@ pub enum LengthUnit {
     NauticalLeague,
 }
 
-impl LengthUnit {
+impl Length {
     pub fn to_string_with_plural(self, v: &Decimal) -> String {
         match self {
-            LengthUnit::Meter(None) => string!("m"),
-            LengthUnit::Meter(Some(p)) => string!(p) + "m",
-            LengthUnit::AstronomicalUnit => string!("au"),
-            LengthUnit::LightYear => string!("ly"),
-            LengthUnit::Parsec(None) => string!("pc"),
-            LengthUnit::Parsec(Some(p)) => string!(p) + "pc",
-            LengthUnit::Thou => string!("th"),
-            LengthUnit::Barleycorn => pluralize!("barleycorn", v),
-            LengthUnit::Inch => pluralize!("inch", "inches", v),
-            LengthUnit::Foot => string!("ft"),
-            LengthUnit::Yard => string!("yd"),
-            LengthUnit::Mile => string!("mi"),
-            LengthUnit::Pole => pluralize!("pole", v),
-            LengthUnit::Rod => pluralize!("rod", v),
-            LengthUnit::Furlong => string!("fur"),
-            LengthUnit::Chain => string!("ch"),
-            LengthUnit::Fathom => string!("ftm"),
-            LengthUnit::NauticalMile => string!("NM"),
-            LengthUnit::League => string!("lea"),
-            LengthUnit::NauticalLeague => string!("NL"),
+            Length::Meter(None) => string!("m"),
+            Length::Meter(Some(p)) => string!(p) + "m",
+            Length::AstronomicalUnit => string!("au"),
+            Length::LightYear => string!("ly"),
+            Length::Parsec(None) => string!("pc"),
+            Length::Parsec(Some(p)) => string!(p) + "pc",
+            Length::Thou => string!("th"),
+            Length::Barleycorn => pluralize!("barleycorn", v),
+            Length::Inch => pluralize!("inch", "inches", v),
+            Length::Foot => string!("ft"),
+            Length::Yard => string!("yd"),
+            Length::Mile => string!("mi"),
+            Length::Pole => pluralize!("pole", v),
+            Length::Rod => pluralize!("rod", v),
+            Length::Furlong => string!("fur"),
+            Length::Chain => string!("ch"),
+            Length::Fathom => string!("ftm"),
+            Length::NauticalMile => string!("NM"),
+            Length::League => string!("lea"),
+            Length::NauticalLeague => string!("NL"),
         }
     }
 
@@ -64,17 +63,17 @@ impl LengthUnit {
         let mut case_sensitive = HashMap::new();
         let mut case_insensitive = HashMap::new();
 
-        for l in LengthUnit::iter() {
+        for l in Length::iter() {
             match l {
-                LengthUnit::Meter(_) => {
+                Length::Meter(_) => {
                     case_sensitive.extend(make_abbreviations_with_prefixes!(
-                        LengthUnit::Meter,
+                        Length::Meter,
                         // case sensitive
                         "m"
                     ));
 
                     case_insensitive.extend(make_abbreviations_with_prefixes!(
-                        LengthUnit::Meter,
+                        Length::Meter,
                         // case insensitive
                         "meter",
                         "metre",
@@ -82,28 +81,28 @@ impl LengthUnit {
                         "metres"
                     ));
                 }
-                LengthUnit::Parsec(_) => {
+                Length::Parsec(_) => {
                     case_sensitive.extend(make_abbreviations_with_prefixes!(
-                        LengthUnit::Parsec,
+                        Length::Parsec,
                         // case sensitive
                         "pc"
                     ));
 
                     case_insensitive.extend(make_abbreviations_with_prefixes!(
-                        LengthUnit::Parsec,
+                        Length::Parsec,
                         // case insensitive
                         "parsec",
                         "parsecs"
                     ));
                 }
-                LengthUnit::AstronomicalUnit => {
+                Length::AstronomicalUnit => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
                         "au"
                     ));
                 }
-                LengthUnit::LightYear => {
+                Length::LightYear => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -117,7 +116,7 @@ impl LengthUnit {
                         "lightyears"
                     ));
                 }
-                LengthUnit::Thou => {
+                Length::Thou => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -131,7 +130,7 @@ impl LengthUnit {
                         "thous"
                     ));
                 }
-                LengthUnit::Barleycorn => {
+                Length::Barleycorn => {
                     case_insensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case insensitive
@@ -139,7 +138,7 @@ impl LengthUnit {
                         "barleycorns"
                     ));
                 }
-                LengthUnit::Inch => {
+                Length::Inch => {
                     // conflict wit "in" (conversion) keyword
                     // case_sensitive.extend(make_abbreviations!(
                     //     l.to_unit(),
@@ -154,7 +153,7 @@ impl LengthUnit {
                         "inches"
                     ));
                 }
-                LengthUnit::Foot => {
+                Length::Foot => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -170,7 +169,7 @@ impl LengthUnit {
                         "foots"
                     ));
                 }
-                LengthUnit::Yard => {
+                Length::Yard => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -184,7 +183,7 @@ impl LengthUnit {
                         "yards"
                     ));
                 }
-                LengthUnit::Mile => {
+                Length::Mile => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -198,7 +197,7 @@ impl LengthUnit {
                         "miles"
                     ));
                 }
-                LengthUnit::League => {
+                Length::League => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -212,7 +211,7 @@ impl LengthUnit {
                         "leagues"
                     ));
                 }
-                LengthUnit::Pole => {
+                Length::Pole => {
                     case_insensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case insensitive
@@ -220,7 +219,7 @@ impl LengthUnit {
                         "poles"
                     ));
                 }
-                LengthUnit::Furlong => {
+                Length::Furlong => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -234,7 +233,7 @@ impl LengthUnit {
                         "furlongs"
                     ));
                 }
-                LengthUnit::Chain => {
+                Length::Chain => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -248,7 +247,7 @@ impl LengthUnit {
                         "chains"
                     ));
                 }
-                LengthUnit::Fathom => {
+                Length::Fathom => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -262,7 +261,7 @@ impl LengthUnit {
                         "fathoms"
                     ));
                 }
-                LengthUnit::NauticalMile => {
+                Length::NauticalMile => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -277,7 +276,7 @@ impl LengthUnit {
                     ));
                 }
 
-                LengthUnit::Rod => {
+                Length::Rod => {
                     case_insensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case insensitive
@@ -285,7 +284,7 @@ impl LengthUnit {
                         "rods"
                     ));
                 }
-                LengthUnit::NauticalLeague => {
+                Length::NauticalLeague => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -310,30 +309,28 @@ impl LengthUnit {
 
     pub fn reference_unit_multiplier(self) -> Decimal {
         match self {
-            LengthUnit::Meter(None) => dec!(1),
-            LengthUnit::Meter(Some(p)) => p.multiplier(),
-            LengthUnit::AstronomicalUnit => dec!(149_597_870_700),
-            LengthUnit::LightYear => dec!(9_460_730_472_580_800),
-            LengthUnit::Parsec(None) => dec!(648000) / Decimal::PI * dec!(149_597_870_700), // 648000/π * au
-            LengthUnit::Parsec(Some(p)) => {
-                LengthUnit::Parsec(None).reference_unit_multiplier() * p.multiplier()
+            Length::Meter(None) => dec!(1),
+            Length::Meter(Some(p)) => p.multiplier(),
+            Length::AstronomicalUnit => dec!(149_597_870_700),
+            Length::LightYear => dec!(9_460_730_472_580_800),
+            Length::Parsec(None) => dec!(648000) / Decimal::PI * dec!(149_597_870_700), // 648000/π * au
+            Length::Parsec(Some(p)) => {
+                Length::Parsec(None).reference_unit_multiplier() * p.multiplier()
             }
-            LengthUnit::Thou => LengthUnit::Inch.reference_unit_multiplier() / dec!(1000),
-            LengthUnit::Barleycorn => LengthUnit::Inch.reference_unit_multiplier() / dec!(3),
-            LengthUnit::Inch => dec!(0.0254),
-            LengthUnit::Foot => LengthUnit::Yard.reference_unit_multiplier() / dec!(3),
-            LengthUnit::Yard => dec!(0.9144),
-            LengthUnit::Mile => LengthUnit::Foot.reference_unit_multiplier() * dec!(5280),
-            LengthUnit::Pole => LengthUnit::Foot.reference_unit_multiplier() * dec!(16.5),
-            LengthUnit::Rod => LengthUnit::Foot.reference_unit_multiplier() * dec!(16.5),
-            LengthUnit::Furlong => LengthUnit::Yard.reference_unit_multiplier() * dec!(220),
-            LengthUnit::Chain => LengthUnit::Yard.reference_unit_multiplier() * dec!(22),
-            LengthUnit::Fathom => LengthUnit::Foot.reference_unit_multiplier() * dec!(6),
-            LengthUnit::NauticalMile => dec!(1852),
-            LengthUnit::League => LengthUnit::Mile.reference_unit_multiplier() * dec!(3),
-            LengthUnit::NauticalLeague => {
-                LengthUnit::NauticalMile.reference_unit_multiplier() * dec!(3)
-            }
+            Length::Thou => Length::Inch.reference_unit_multiplier() / dec!(1000),
+            Length::Barleycorn => Length::Inch.reference_unit_multiplier() / dec!(3),
+            Length::Inch => dec!(0.0254),
+            Length::Foot => Length::Yard.reference_unit_multiplier() / dec!(3),
+            Length::Yard => dec!(0.9144),
+            Length::Mile => Length::Foot.reference_unit_multiplier() * dec!(5280),
+            Length::Pole => Length::Foot.reference_unit_multiplier() * dec!(16.5),
+            Length::Rod => Length::Foot.reference_unit_multiplier() * dec!(16.5),
+            Length::Furlong => Length::Yard.reference_unit_multiplier() * dec!(220),
+            Length::Chain => Length::Yard.reference_unit_multiplier() * dec!(22),
+            Length::Fathom => Length::Foot.reference_unit_multiplier() * dec!(6),
+            Length::NauticalMile => dec!(1852),
+            Length::League => Length::Mile.reference_unit_multiplier() * dec!(3),
+            Length::NauticalLeague => Length::NauticalMile.reference_unit_multiplier() * dec!(3),
         }
     }
 
@@ -342,8 +339,8 @@ impl LengthUnit {
     }
 }
 
-impl Default for LengthUnit {
+impl Default for Length {
     fn default() -> Self {
-        LengthUnit::Meter(None)
+        Length::Meter(None)
     }
 }

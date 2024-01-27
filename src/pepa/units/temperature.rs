@@ -4,25 +4,25 @@ use rust_decimal_macros::dec;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::{Decimal, make_abbreviations, string, Unit};
-use crate::units::Abbreviations;
+use crate::units::{Abbreviations, Unit};
+use crate::{make_abbreviations, string, Decimal};
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Default, Hash)]
-pub enum TemperatureUnit {
+pub enum Temperature {
     DegreesCelsius,
     DegreesFahrenheit,
     #[default]
     Kelvin,
 }
 
-impl TemperatureUnit {
+impl Temperature {
     pub fn abbreviations() -> Abbreviations {
         let mut case_sensitive = HashMap::new();
         let mut case_insensitive = HashMap::new();
 
-        for t in TemperatureUnit::iter() {
+        for t in Temperature::iter() {
             match t {
-                TemperatureUnit::DegreesCelsius => {
+                Temperature::DegreesCelsius => {
                     case_insensitive.extend(make_abbreviations!(
                         t.to_unit(),
                         // case insensitive
@@ -32,7 +32,7 @@ impl TemperatureUnit {
                         "degreecelsius"
                     ));
                 }
-                TemperatureUnit::DegreesFahrenheit => {
+                Temperature::DegreesFahrenheit => {
                     case_insensitive.extend(make_abbreviations!(
                         t.to_unit(),
                         // case insensitive
@@ -45,7 +45,7 @@ impl TemperatureUnit {
                         "degreefahrenheits"
                     ));
                 }
-                TemperatureUnit::Kelvin => {
+                Temperature::Kelvin => {
                     case_sensitive.extend(make_abbreviations!(
                         t.to_unit(),
                         // case sensitive
@@ -70,29 +70,29 @@ impl TemperatureUnit {
 
     pub fn to_reference_unit(self, v: Decimal) -> Decimal {
         match self {
-            TemperatureUnit::DegreesCelsius => v + dec!(273.15),
-            TemperatureUnit::DegreesFahrenheit => {
+            Temperature::DegreesCelsius => v + dec!(273.15),
+            Temperature::DegreesFahrenheit => {
                 dec!(273.15) + (v - dec!(32.0)) * (dec!(5.0) / dec!(9.0))
             }
-            TemperatureUnit::Kelvin => v,
+            Temperature::Kelvin => v,
         }
     }
 
     pub fn from_reference_unit(self, v: Decimal) -> Decimal {
         match self {
-            TemperatureUnit::DegreesCelsius => v - dec!(273.15),
-            TemperatureUnit::DegreesFahrenheit => {
+            Temperature::DegreesCelsius => v - dec!(273.15),
+            Temperature::DegreesFahrenheit => {
                 (v - dec!(273.15)) * (dec!(9.0) / dec!(5.0)) + dec!(32.0)
             }
-            TemperatureUnit::Kelvin => v,
+            Temperature::Kelvin => v,
         }
     }
 
     pub fn to_string_with_plural(self, _: &Decimal) -> String {
         match self {
-            TemperatureUnit::DegreesCelsius => string!("°C"),
-            TemperatureUnit::DegreesFahrenheit => string!("°F"),
-            TemperatureUnit::Kelvin => string!("K"),
+            Temperature::DegreesCelsius => string!("°C"),
+            Temperature::DegreesFahrenheit => string!("°F"),
+            Temperature::Kelvin => string!("K"),
         }
     }
 

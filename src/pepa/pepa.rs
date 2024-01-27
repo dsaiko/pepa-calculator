@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use crate::{ComputeError, ParserError, string};
 use crate::compute::compute;
-use crate::ComputeError::InvalidExpression;
 use crate::expression::{Expression, NumericExpression};
 use crate::operators::CONVERSION_CHARACTER;
 use crate::parser::parse;
+use crate::ComputeError::InvalidExpression;
+use crate::{string, ComputeError, ParserError};
 
 #[derive(Debug, Clone)]
 pub struct Statement {
@@ -14,27 +14,27 @@ pub struct Statement {
     pub result: Option<Result<NumericExpression, ComputeError>>,
 }
 
-pub struct Calc {
+pub struct Calculator {
     statements: Vec<Statement>,
     variables: HashMap<String, NumericExpression>,
 }
 
-impl Default for Calc {
+impl Default for Calculator {
     fn default() -> Self {
-        Calc::new()
+        Calculator::new()
     }
 }
 
-impl Calc {
-    pub fn new() -> Calc {
-        Calc {
+impl Calculator {
+    pub fn new() -> Calculator {
+        Calculator {
             statements: vec![],
             variables: Default::default(),
         }
     }
 
     pub fn reset(&mut self) {
-        *self = Calc::new();
+        *self = Calculator::new();
     }
 
     fn prepare(&mut self, statement: &str) {

@@ -1,6 +1,6 @@
 use crate::pluralize;
-use crate::utils::Pluralize;
 use crate::utils::{flatten_lines, split_string_by_comma};
+use crate::utils::Pluralize;
 
 #[test]
 fn test_split() {

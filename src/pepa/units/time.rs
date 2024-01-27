@@ -4,35 +4,33 @@ use rust_decimal_macros::dec;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::{
-    Decimal, make_abbreviations, make_abbreviations_with_prefixes, string, Unit, UnitPrefix,
-};
-use crate::units::Abbreviations;
+use crate::units::{Abbreviations, Prefix, Unit};
+use crate::{make_abbreviations, make_abbreviations_with_prefixes, string, Decimal};
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Hash)]
-pub enum TimeUnit {
-    Second(Option<UnitPrefix>),
+pub enum Time {
+    Second(Option<Prefix>),
     Minute,
     Hour,
     Day,
 }
 
-impl TimeUnit {
+impl Time {
     pub fn abbreviations() -> Abbreviations {
         let mut case_sensitive = HashMap::new();
         let mut case_insensitive = HashMap::new();
 
-        for t in TimeUnit::iter() {
+        for t in Time::iter() {
             match t {
-                TimeUnit::Second(_) => {
+                Time::Second(_) => {
                     case_sensitive.extend(make_abbreviations_with_prefixes!(
-                        TimeUnit::Second,
+                        Time::Second,
                         // case sensitive
                         "s"
                     ));
 
                     case_insensitive.extend(make_abbreviations_with_prefixes!(
-                        TimeUnit::Second,
+                        Time::Second,
                         // case insensitive
                         "second",
                         "seconds",
@@ -40,7 +38,7 @@ impl TimeUnit {
                         "secs"
                     ));
                 }
-                TimeUnit::Minute => {
+                Time::Minute => {
                     case_sensitive.extend(make_abbreviations!(
                         t.to_unit(),
                         // case sensitive
@@ -56,7 +54,7 @@ impl TimeUnit {
                         "mins"
                     ));
                 }
-                TimeUnit::Hour => {
+                Time::Hour => {
                     case_sensitive.extend(make_abbreviations!(
                         t.to_unit(),
                         // case sensitive
@@ -71,7 +69,7 @@ impl TimeUnit {
                         "hrs"
                     ));
                 }
-                TimeUnit::Day => {
+                Time::Day => {
                     case_sensitive.extend(make_abbreviations!(
                         t.to_unit(),
                         // case sensitive
@@ -97,21 +95,21 @@ impl TimeUnit {
 
     pub fn reference_unit_multiplier(self) -> Decimal {
         match self {
-            TimeUnit::Second(None) => dec!(1),
-            TimeUnit::Second(Some(p)) => p.multiplier(),
-            TimeUnit::Minute => dec!(60.0),
-            TimeUnit::Hour => dec!(60.0) * dec!(60.0),
-            TimeUnit::Day => dec!(24.0) * dec!(60.0) * dec!(60.0),
+            Time::Second(None) => dec!(1),
+            Time::Second(Some(p)) => p.multiplier(),
+            Time::Minute => dec!(60.0),
+            Time::Hour => dec!(60.0) * dec!(60.0),
+            Time::Day => dec!(24.0) * dec!(60.0) * dec!(60.0),
         }
     }
 
     pub fn to_string_with_plural(self, _: &Decimal) -> String {
         match self {
-            TimeUnit::Second(None) => string!("s"),
-            TimeUnit::Second(Some(p)) => string!(p) + "s",
-            TimeUnit::Minute => string!("m"),
-            TimeUnit::Hour => string!("h"),
-            TimeUnit::Day => string!("d"),
+            Time::Second(None) => string!("s"),
+            Time::Second(Some(p)) => string!(p) + "s",
+            Time::Minute => string!("m"),
+            Time::Hour => string!("h"),
+            Time::Day => string!("d"),
         }
     }
 
@@ -120,8 +118,8 @@ impl TimeUnit {
     }
 }
 
-impl Default for TimeUnit {
+impl Default for Time {
     fn default() -> Self {
-        TimeUnit::Second(None)
+        Time::Second(None)
     }
 }

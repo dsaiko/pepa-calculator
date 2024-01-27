@@ -5,15 +5,15 @@ use rust_decimal_macros::dec;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::unit_prefixes::UnitPrefix;
-use crate::units::Abbreviations;
+use crate::units::Prefix;
+use crate::units::{Abbreviations, Unit};
 use crate::utils::Pluralize;
-use crate::{make_abbreviations, make_abbreviations_with_prefixes, pluralize, string, Unit};
+use crate::{make_abbreviations, make_abbreviations_with_prefixes, pluralize, string};
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Hash)]
-pub enum MassUnit {
-    Gram(Option<UnitPrefix>),
-    Tonne(Option<UnitPrefix>),
+pub enum Mass {
+    Gram(Option<Prefix>),
+    Tonne(Option<Prefix>),
     DekaGram,
     LongTon,
     ShortTon,
@@ -25,22 +25,22 @@ pub enum MassUnit {
     Grain,
 }
 
-impl MassUnit {
+impl Mass {
     pub fn to_string_with_plural(self, v: &Decimal) -> String {
         match self {
-            MassUnit::Gram(None) => string!("g"),
-            MassUnit::Gram(Some(p)) => string!(p) + "g",
-            MassUnit::Tonne(None) => string!("t"),
-            MassUnit::Tonne(Some(p)) => string!(p) + "t",
-            MassUnit::DekaGram => string!("dkg"),
-            MassUnit::LongTon => string!("LT"),
-            MassUnit::ShortTon => string!("st"),
-            MassUnit::Pound => string!("lb"),
-            MassUnit::Ounce => string!("oz"),
-            MassUnit::Slug => pluralize!("slug", v),
-            MassUnit::Grain => string!("gr"),
-            MassUnit::TroyPound => string!("lbt"),
-            MassUnit::TroyOunce => string!("ozt"),
+            Mass::Gram(None) => string!("g"),
+            Mass::Gram(Some(p)) => string!(p) + "g",
+            Mass::Tonne(None) => string!("t"),
+            Mass::Tonne(Some(p)) => string!(p) + "t",
+            Mass::DekaGram => string!("dkg"),
+            Mass::LongTon => string!("LT"),
+            Mass::ShortTon => string!("st"),
+            Mass::Pound => string!("lb"),
+            Mass::Ounce => string!("oz"),
+            Mass::Slug => pluralize!("slug", v),
+            Mass::Grain => string!("gr"),
+            Mass::TroyPound => string!("lbt"),
+            Mass::TroyOunce => string!("ozt"),
         }
     }
 
@@ -48,17 +48,17 @@ impl MassUnit {
         let mut case_sensitive = HashMap::new();
         let mut case_insensitive = HashMap::new();
 
-        for l in MassUnit::iter() {
+        for l in Mass::iter() {
             match l {
-                MassUnit::Gram(_) => {
+                Mass::Gram(_) => {
                     case_sensitive.extend(make_abbreviations_with_prefixes!(
-                        MassUnit::Gram,
+                        Mass::Gram,
                         // case sensitive
                         "g"
                     ));
 
                     case_insensitive.extend(make_abbreviations_with_prefixes!(
-                        MassUnit::Gram,
+                        Mass::Gram,
                         // case insensitive
                         "gram",
                         "grams",
@@ -68,28 +68,28 @@ impl MassUnit {
                         "gramms"
                     ));
                 }
-                MassUnit::Tonne(_) => {
+                Mass::Tonne(_) => {
                     case_sensitive.extend(make_abbreviations_with_prefixes!(
-                        MassUnit::Tonne,
+                        Mass::Tonne,
                         // case sensitive
                         "t"
                     ));
 
                     case_insensitive.extend(make_abbreviations_with_prefixes!(
-                        MassUnit::Tonne,
+                        Mass::Tonne,
                         // case insensitive
                         "tonne",
                         "tonnes"
                     ));
                 }
-                MassUnit::DekaGram => {
+                Mass::DekaGram => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
                         "dkg"
                     ));
                 }
-                MassUnit::LongTon => {
+                Mass::LongTon => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -103,7 +103,7 @@ impl MassUnit {
                         "longtons"
                     ));
                 }
-                MassUnit::ShortTon => {
+                Mass::ShortTon => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -117,7 +117,7 @@ impl MassUnit {
                         "shorttons"
                     ));
                 }
-                MassUnit::Pound => {
+                Mass::Pound => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -135,7 +135,7 @@ impl MassUnit {
                         "libres"
                     ));
                 }
-                MassUnit::Ounce => {
+                Mass::Ounce => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -149,7 +149,7 @@ impl MassUnit {
                         "ounces"
                     ));
                 }
-                MassUnit::Slug => {
+                Mass::Slug => {
                     case_insensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case insensitive
@@ -157,7 +157,7 @@ impl MassUnit {
                         "slugs"
                     ));
                 }
-                MassUnit::Grain => {
+                Mass::Grain => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -171,7 +171,7 @@ impl MassUnit {
                         "grains"
                     ));
                 }
-                MassUnit::TroyPound => {
+                Mass::TroyPound => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -189,7 +189,7 @@ impl MassUnit {
                         "troylibres"
                     ));
                 }
-                MassUnit::TroyOunce => {
+                Mass::TroyOunce => {
                     case_sensitive.extend(make_abbreviations!(
                         l.to_unit(),
                         // case sensitive
@@ -214,21 +214,19 @@ impl MassUnit {
 
     pub fn reference_unit_multiplier(self) -> Decimal {
         match self {
-            MassUnit::Gram(None) => dec!(1),
-            MassUnit::Gram(Some(p)) => p.multiplier(),
-            MassUnit::Tonne(None) => dec!(1000000),
-            MassUnit::Tonne(Some(p)) => {
-                MassUnit::Tonne(None).reference_unit_multiplier() * p.multiplier()
-            }
-            MassUnit::DekaGram => dec!(10),
-            MassUnit::LongTon => MassUnit::Pound.reference_unit_multiplier() * dec!(2240),
-            MassUnit::ShortTon => MassUnit::Pound.reference_unit_multiplier() * dec!(2000),
-            MassUnit::Pound => dec!(453.59237),
-            MassUnit::Ounce => MassUnit::Pound.reference_unit_multiplier() / dec!(16),
-            MassUnit::Slug => MassUnit::Pound.reference_unit_multiplier() * dec!(32.17405),
-            MassUnit::Grain => dec!(0.06479891),
-            MassUnit::TroyPound => MassUnit::TroyOunce.reference_unit_multiplier() * dec!(12),
-            MassUnit::TroyOunce => MassUnit::Grain.reference_unit_multiplier() * dec!(480),
+            Mass::Gram(None) => dec!(1),
+            Mass::Gram(Some(p)) => p.multiplier(),
+            Mass::Tonne(None) => dec!(1000000),
+            Mass::Tonne(Some(p)) => Mass::Tonne(None).reference_unit_multiplier() * p.multiplier(),
+            Mass::DekaGram => dec!(10),
+            Mass::LongTon => Mass::Pound.reference_unit_multiplier() * dec!(2240),
+            Mass::ShortTon => Mass::Pound.reference_unit_multiplier() * dec!(2000),
+            Mass::Pound => dec!(453.59237),
+            Mass::Ounce => Mass::Pound.reference_unit_multiplier() / dec!(16),
+            Mass::Slug => Mass::Pound.reference_unit_multiplier() * dec!(32.17405),
+            Mass::Grain => dec!(0.06479891),
+            Mass::TroyPound => Mass::TroyOunce.reference_unit_multiplier() * dec!(12),
+            Mass::TroyOunce => Mass::Grain.reference_unit_multiplier() * dec!(480),
         }
     }
 
@@ -237,8 +235,8 @@ impl MassUnit {
     }
 }
 
-impl Default for MassUnit {
+impl Default for Mass {
     fn default() -> Self {
-        MassUnit::Gram(None)
+        Mass::Gram(None)
     }
 }

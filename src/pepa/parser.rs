@@ -1,9 +1,10 @@
-use crate::{Decimal, ParserError, Unit};
+use crate::{Decimal, ParserError};
 use crate::constants::constants;
 use crate::expression::{Expression, ExpressionToken, NumericExpression};
 use crate::functions::{function_names, functions};
 use crate::generators::generators;
 use crate::operators::{CONVERSION_CHARACTER, operators, Priority};
+use crate::units::Unit;
 use crate::utils::split_string_by_comma;
 
 pub(super) fn parse(ex: &str) -> Result<Expression, ParserError> {

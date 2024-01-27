@@ -1,9 +1,10 @@
 use itertools::Itertools;
 use rust_decimal::Decimal;
 
-use crate::{ComputeError, Unit};
+use crate::ComputeError;
 use crate::expression::{Expression, ExpressionToken, NumericExpression};
 use crate::functions::Function;
+use crate::units::Unit;
 use crate::utils::flatten_lines;
 
 pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError> {

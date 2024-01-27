@@ -1,11 +1,11 @@
 use rust_decimal_macros::dec;
 
+use crate::units::{Temperature, Unit};
 use crate::utils::test_units;
-use crate::{TemperatureUnit, Unit};
 
 #[test]
 fn test_celsius() {
-    let unit = Some(Unit::Temperature(TemperatureUnit::DegreesCelsius));
+    let unit = Some(Unit::Temperature(Temperature::DegreesCelsius));
 
     test_units("(33 + 3) celsius + 15", &[(dec!(51.0), unit)]);
     test_units("celsius((33 + 3) kelvins)", &[(dec!(-237.15), unit)]);
@@ -29,14 +29,14 @@ fn test_celsius() {
 
 #[test]
 fn test_kelvin() {
-    let unit = Some(Unit::Temperature(TemperatureUnit::Kelvin));
+    let unit = Some(Unit::Temperature(Temperature::Kelvin));
 
     test_units("kelvin(pow(55 celsius, 2))", &[(dec!(3298.15), unit)]);
 }
 
 #[test]
 fn test_fahrenheit() {
-    let unit = Some(Unit::Temperature(TemperatureUnit::DegreesFahrenheit));
+    let unit = Some(Unit::Temperature(Temperature::DegreesFahrenheit));
 
     test_units("10 celsius + pow(5,2) Fahrenheit", &[(dec!(75), unit)]);
     test_units("10 celsius + (pow(5,2) Fahrenheit)", &[(dec!(75), unit)]);
@@ -45,7 +45,7 @@ fn test_fahrenheit() {
 
 #[test]
 fn test_in_operator() {
-    let unit = Some(Unit::Temperature(TemperatureUnit::DegreesFahrenheit));
+    let unit = Some(Unit::Temperature(Temperature::DegreesFahrenheit));
 
     test_units("pow(5,2) Celsius to Fahrenheit", &[(dec!(77), unit)]);
     test_units(
@@ -56,7 +56,7 @@ fn test_in_operator() {
 
 #[test]
 fn test_list_fce() {
-    let unit = Some(Unit::Temperature(TemperatureUnit::DegreesCelsius));
+    let unit = Some(Unit::Temperature(Temperature::DegreesCelsius));
 
     test_units(
         "min(55 Celsius, 180 Kelvin) into celsius",

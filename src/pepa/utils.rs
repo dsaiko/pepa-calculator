@@ -1,7 +1,6 @@
+use crate::{Calculator, NumericExpression, Unit};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-
-use crate::{Calc, NumericExpression, Unit};
 
 pub(super) fn split_string_by_comma(s: &str) -> Vec<String> {
     let s = s.trim();
@@ -113,7 +112,7 @@ macro_rules! make_abbreviations_with_prefixes {
         for name in names {
             abbreviations.insert(name.to_owned(), $t(None).to_unit());
 
-            for prefix in UnitPrefix::iter() {
+            for prefix in Prefix::iter() {
                 for p in prefix.abbreviations() {
                     abbreviations.insert(
                         format!("{}{}", p, name),
@@ -154,7 +153,7 @@ pub(super) fn flatten_lines<T: Clone>(lines: &Vec<Vec<T>>) -> Vec<Vec<T>> {
 
 #[cfg(test)]
 pub fn test_units(test: &str, res: &[(Decimal, Option<Unit>)]) {
-    let mut computer = Calc::default();
+    let mut computer = Calculator::default();
     let statement = computer.compute(test).unwrap();
 
     if let Err(e) = &statement.expression {

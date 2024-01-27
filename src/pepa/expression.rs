@@ -2,11 +2,11 @@ use std::fmt::{Display, Formatter};
 
 use itertools::Itertools;
 
+use crate::{ComputeError, Decimal, string};
 use crate::functions::Function;
 use crate::generators::Generator;
-use crate::operators::{Operator, CONVERSION_CHARACTER};
+use crate::operators::{CONVERSION_CHARACTER, Operator};
 use crate::units::Unit;
-use crate::{string, ComputeError, Decimal};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum NumericExpression {

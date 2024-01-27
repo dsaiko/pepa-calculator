@@ -3,18 +3,15 @@ use std::collections::HashMap;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::{Decimal, string};
-use crate::units_length::LengthUnit;
-use crate::units_mass::MassUnit;
-use crate::units_temperature::TemperatureUnit;
-use crate::units_time::TimeUnit;
+use crate::units::{Length, Mass, Temperature, Time};
+use crate::{string, Decimal};
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Hash)]
 pub enum Unit {
-    Temperature(TemperatureUnit),
-    Time(TimeUnit),
-    Length(LengthUnit),
-    Mass(MassUnit),
+    Temperature(Temperature),
+    Time(Time),
+    Length(Length),
+    Mass(Mass),
 }
 
 pub struct Abbreviations {
@@ -25,10 +22,10 @@ pub struct Abbreviations {
 impl Unit {
     fn abbreviations(&self) -> Abbreviations {
         match self {
-            Unit::Temperature(_) => TemperatureUnit::abbreviations(),
-            Unit::Time(_) => TimeUnit::abbreviations(),
-            Unit::Length(_) => LengthUnit::abbreviations(),
-            Unit::Mass(_) => MassUnit::abbreviations(),
+            Unit::Temperature(_) => Temperature::abbreviations(),
+            Unit::Time(_) => Time::abbreviations(),
+            Unit::Length(_) => Length::abbreviations(),
+            Unit::Mass(_) => Mass::abbreviations(),
         }
     }
 

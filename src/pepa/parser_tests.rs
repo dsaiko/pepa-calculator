@@ -1,4 +1,4 @@
-use crate::Calc;
+use crate::Calculator;
 
 #[test]
 fn test_explain() {
@@ -58,7 +58,7 @@ fn test_explain() {
     ];
 
     for test in tests {
-        let mut computer = Calc::default();
+        let mut computer = Calculator::default();
         let statement = computer.prepare_statements(test.0).unwrap();
         let expression = statement.expression.as_ref().unwrap().clone();
         let actual = expression.explain();

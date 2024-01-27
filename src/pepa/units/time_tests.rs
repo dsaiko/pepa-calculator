@@ -1,11 +1,11 @@
 use rust_decimal_macros::dec;
 
-use crate::{TimeUnit, Unit};
+use crate::units::{Time, Unit};
 use crate::utils::test_units;
 
 #[test]
 fn test_time() {
-    let unit = Some(Unit::Time(TimeUnit::Hour));
+    let unit = Some(Unit::Time(Time::Hour));
 
     test_units(
         "(5 days + 1 hour + (60 * 30) seconds + 15 min) in hours",
