@@ -1,12 +1,14 @@
+use std::collections::HashMap;
+
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use std::collections::HashMap;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::unit_prefixes::UnitPrefix;
-use crate::utils::Pluralize;
 use crate::{make_abbreviations, make_abbreviations_with_prefixes, pluralize, string, Unit};
+use crate::unit_prefixes::UnitPrefix;
+use crate::units::Abbreviations;
+use crate::utils::Pluralize;
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Hash)]
 pub enum LengthUnit {
@@ -19,7 +21,6 @@ pub enum LengthUnit {
     Thou,
     Barleycorn,
     Inch,
-    Finger,
     Foot,
     Yard,
     Mile,
@@ -44,7 +45,7 @@ impl LengthUnit {
             LengthUnit::Parsec(Some(p)) => string!(p) + "pc",
             LengthUnit::Thou => string!("th"),
             LengthUnit::Barleycorn => pluralize!("barleycorn", v),
-            LengthUnit::Inch => string!("in"),
+            LengthUnit::Inch => pluralize!("inch", "inches", v),
             LengthUnit::Foot => string!("ft"),
             LengthUnit::Yard => string!("yd"),
             LengthUnit::Mile => string!("mi"),
@@ -54,63 +55,257 @@ impl LengthUnit {
             LengthUnit::Chain => string!("ch"),
             LengthUnit::Fathom => string!("ftm"),
             LengthUnit::NauticalMile => string!("NM"),
-            LengthUnit::Finger => pluralize!("finger", v),
             LengthUnit::League => string!("lea"),
             LengthUnit::NauticalLeague => string!("NL"),
         }
     }
 
-    pub fn abbreviations() -> HashMap<String, Unit> {
-        let mut abbreviations = HashMap::new();
+    pub fn abbreviations() -> Abbreviations {
+        let mut case_sensitive = HashMap::new();
+        let mut case_insensitive = HashMap::new();
 
         for l in LengthUnit::iter() {
-            abbreviations.extend(match l {
+            match l {
                 LengthUnit::Meter(_) => {
-                    make_abbreviations_with_prefixes!(
+                    case_sensitive.extend(make_abbreviations_with_prefixes!(
                         LengthUnit::Meter,
-                        "m",
+                        // case sensitive
+                        "m"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations_with_prefixes!(
+                        LengthUnit::Meter,
+                        // case insensitive
                         "meter",
                         "metre",
                         "meters",
                         "metres"
-                    )
+                    ));
                 }
                 LengthUnit::Parsec(_) => {
-                    make_abbreviations_with_prefixes!(LengthUnit::Meter, "pc", "parsec", "parsecs")
+                    case_sensitive.extend(make_abbreviations_with_prefixes!(
+                        LengthUnit::Parsec,
+                        // case sensitive
+                        "pc"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations_with_prefixes!(
+                        LengthUnit::Parsec,
+                        // case insensitive
+                        "parsec",
+                        "parsecs"
+                    ));
                 }
-                LengthUnit::AstronomicalUnit => make_abbreviations!(l.to_unit(), "au"),
+                LengthUnit::AstronomicalUnit => {
+                    case_sensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case sensitive
+                        "au"
+                    ));
+                }
                 LengthUnit::LightYear => {
-                    make_abbreviations!(l.to_unit(), "ly", "lightyear", "lightyears")
+                    case_sensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case sensitive
+                        "ly"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "lightyear",
+                        "lightyears"
+                    ));
                 }
-                LengthUnit::Thou => make_abbreviations!(l.to_unit(), "th", "thou", "thous"),
+                LengthUnit::Thou => {
+                    case_sensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case sensitive
+                        "th"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "thou",
+                        "thous"
+                    ));
+                }
                 LengthUnit::Barleycorn => {
-                    make_abbreviations!(l.to_unit(), "barleycorn", "barleycorns")
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "barleycorn",
+                        "barleycorns"
+                    ));
                 }
-                LengthUnit::Inch => make_abbreviations!(l.to_unit(), "in", "inch", "inches"),
+                LengthUnit::Inch => {
+                    // conflict wit "in" (conversion) keyword
+                    // case_sensitive.extend(make_abbreviations!(
+                    //     l.to_unit(),
+                    //     // case sensitive
+                    //     "in"
+                    // ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "inch",
+                        "inches"
+                    ));
+                }
                 LengthUnit::Foot => {
-                    make_abbreviations!(l.to_unit(), "ft", "foot", "feet", "feets", "foots")
+                    case_sensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case sensitive
+                        "ft"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "foot",
+                        "feet",
+                        "feets",
+                        "foots"
+                    ));
                 }
-                LengthUnit::Yard => make_abbreviations!(l.to_unit(), "yd", "yard", "yards"),
-                LengthUnit::Mile => make_abbreviations!(l.to_unit(), "mi", "mile", "miles"),
-                LengthUnit::League => make_abbreviations!(l.to_unit(), "lea", "league", "leagues"),
-                LengthUnit::Pole => make_abbreviations!(l.to_unit(), "pole", "poles"),
+                LengthUnit::Yard => {
+                    case_sensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case sensitive
+                        "yd"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "yard",
+                        "yards"
+                    ));
+                }
+                LengthUnit::Mile => {
+                    case_sensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case sensitive
+                        "mi"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "mile",
+                        "miles"
+                    ));
+                }
+                LengthUnit::League => {
+                    case_sensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case sensitive
+                        "lea"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "league",
+                        "leagues"
+                    ));
+                }
+                LengthUnit::Pole => {
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "pole",
+                        "poles"
+                    ));
+                }
                 LengthUnit::Furlong => {
-                    make_abbreviations!(l.to_unit(), "fur", "furlong", "furlongs")
+                    case_sensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case sensitive
+                        "fur"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "furlong",
+                        "furlongs"
+                    ));
                 }
-                LengthUnit::Chain => make_abbreviations!(l.to_unit(), "ch", "chain", "chains"),
-                LengthUnit::Fathom => make_abbreviations!(l.to_unit(), "ftm", "fathom", "fathoms"),
+                LengthUnit::Chain => {
+                    case_sensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case sensitive
+                        "ch"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "chain",
+                        "chains"
+                    ));
+                }
+                LengthUnit::Fathom => {
+                    case_sensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case sensitive
+                        "ftm"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "fathom",
+                        "fathoms"
+                    ));
+                }
                 LengthUnit::NauticalMile => {
-                    make_abbreviations!(l.to_unit(), "NM", "NauticalMile", "NauticalMiles")
+                    case_sensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case sensitive
+                        "NM"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "nauticalmile",
+                        "nauticalmiles"
+                    ));
                 }
-                LengthUnit::Finger => make_abbreviations!(l.to_unit(), "finger", "fingers"),
-                LengthUnit::Rod => make_abbreviations!(l.to_unit(), "rod", "rods"),
+
+                LengthUnit::Rod => {
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "rod",
+                        "rods"
+                    ));
+                }
                 LengthUnit::NauticalLeague => {
-                    make_abbreviations!(l.to_unit(), "NL", "NauticalLeague", "NauticalLeagues")
+                    case_sensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case sensitive
+                        "NL"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        l.to_unit(),
+                        // case insensitive
+                        "nauticalleague",
+                        "nauticalleagues"
+                    ));
                 }
-            });
+            };
         }
 
-        abbreviations
+        Abbreviations {
+            case_sensitive,
+            case_insensitive,
+        }
     }
 
     pub fn reference_unit_multiplier(self) -> Decimal {
@@ -131,11 +326,10 @@ impl LengthUnit {
             LengthUnit::Mile => LengthUnit::Foot.reference_unit_multiplier() * dec!(5280),
             LengthUnit::Pole => LengthUnit::Foot.reference_unit_multiplier() * dec!(16.5),
             LengthUnit::Rod => LengthUnit::Foot.reference_unit_multiplier() * dec!(16.5),
-            LengthUnit::Furlong => LengthUnit::Yard.reference_unit_multiplier() / dec!(220),
-            LengthUnit::Chain => LengthUnit::Yard.reference_unit_multiplier() / dec!(22),
+            LengthUnit::Furlong => LengthUnit::Yard.reference_unit_multiplier() * dec!(220),
+            LengthUnit::Chain => LengthUnit::Yard.reference_unit_multiplier() * dec!(22),
             LengthUnit::Fathom => LengthUnit::Foot.reference_unit_multiplier() * dec!(6),
-            LengthUnit::NauticalMile => LengthUnit::Foot.reference_unit_multiplier() * dec!(6080),
-            LengthUnit::Finger => LengthUnit::Inch.reference_unit_multiplier() * dec!(7) / dec!(8),
+            LengthUnit::NauticalMile => dec!(1852),
             LengthUnit::League => LengthUnit::Mile.reference_unit_multiplier() * dec!(3),
             LengthUnit::NauticalLeague => {
                 LengthUnit::NauticalMile.reference_unit_multiplier() * dec!(3)

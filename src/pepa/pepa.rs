@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
+use crate::{ComputeError, ParserError, string};
 use crate::compute::compute;
+use crate::ComputeError::InvalidExpression;
 use crate::expression::{Expression, NumericExpression};
 use crate::operators::CONVERSION_CHARACTER;
 use crate::parser::parse;
-use crate::ComputeError::InvalidExpression;
-use crate::{string, ComputeError, ParserError};
 
 #[derive(Debug, Clone)]
 pub struct Statement {
@@ -42,6 +42,8 @@ impl Calc {
             .lines()
             .map(|line| line.trim())
             .filter(|line| !line.is_empty())
+            .filter(|line| !line.starts_with('#'))
+            .filter(|line| !line.starts_with("//"))
         {
             let mut line = line.to_owned();
             for r in [" in ", " to ", " into "] {

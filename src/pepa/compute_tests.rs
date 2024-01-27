@@ -1,10 +1,11 @@
 use std::collections::HashSet;
 
-use pepa::Calc;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
-fn test(tests: &[(&str, Decimal)]) {
+use crate::Calc;
+
+fn test_computation(tests: &[(&str, Decimal)]) {
     for test in tests {
         let mut computer = Calc::default();
         let statement = computer.compute(test.0).unwrap();
@@ -34,8 +35,8 @@ fn test_errors(tests: &[&str]) {
 }
 
 #[test]
-fn calc_plus_minus() {
-    test(&[
+fn test_plus_minus() {
+    test_computation(&[
         ("55", dec!(55.0)),
         ("+55", dec!(55.0)),
         ("55 +44", dec!(99.0)),
@@ -52,13 +53,13 @@ fn calc_plus_minus() {
 }
 
 #[test]
-fn calc_plus_minus_errors() {
+fn test_plus_minus_errors() {
     test_errors(&["-", "+"]);
 }
 
 #[test]
-fn parentheses() {
-    test(&[
+fn test_parentheses() {
+    test_computation(&[
         ("() + 2", dec!(2.0)),
         ("2 + ()", dec!(2.0)),
         ("2 + () - 2", dec!(0.0)),
@@ -73,13 +74,13 @@ fn parentheses() {
 }
 
 #[test]
-fn parentheses_errors() {
+fn test_parentheses_errors() {
     test_errors(&[") 2 + 1", "( 2 + 1))", "( 2 + 1)(", "()", "("]);
 }
 
 #[test]
-fn multiplication() {
-    test(&[
+fn test_multiplication() {
+    test_computation(&[
         ("3 * 3", dec!(9.0)),
         ("3 * 3 * 3", dec!(27.0)),
         ("3 * (-(1))", dec!(-3.0)),
@@ -100,13 +101,13 @@ fn multiplication() {
 }
 
 #[test]
-fn multiplication_errors() {
+fn test_multiplication_errors() {
     test_errors(&["*", "2 ** 3", "*3", "3-*1"]);
 }
 
 #[test]
-fn division() {
-    test(&[
+fn test_division() {
+    test_computation(&[
         ("3 / 3", dec!(1.0)),
         ("9 / 3 / 3", dec!(1.0)),
         ("9 / 3 / 3 * 5 / 5 * 3", dec!(3.0)),
@@ -118,8 +119,8 @@ fn division() {
 }
 
 #[test]
-fn pow() {
-    test(&[
+fn test_pow() {
+    test_computation(&[
         ("3 ^ 3", dec!(27.0)),
         ("5 ^ 2 * 3", dec!(75.0)),
         ("(3 * 5) ^ 2", dec!(225.0)),
@@ -133,8 +134,8 @@ fn pow() {
 }
 
 #[test]
-fn sqrt() {
-    test(&[
+fn test_sqrt() {
+    test_computation(&[
         ("sqrt(25)", dec!(5.0)),
         ("sqr(5)", dec!(25.0)),
         ("sqrt(25)+sqr(5)", dec!(30.0)),
@@ -147,13 +148,13 @@ fn sqrt() {
 }
 
 #[test]
-fn sqrt_errors() {
+fn test_sqrt_errors() {
     test_errors(&["sqrt", "5sqrt"]);
 }
 
 #[test]
-fn round() {
-    test(&[
+fn test_round() {
+    test_computation(&[
         ("round(1.6)", dec!(2.0)),
         ("round(sqrt(20))", dec!(4.0)),
         ("sqrt(round(sqrt(20)))", dec!(2.0)),
@@ -164,8 +165,8 @@ fn round() {
 }
 
 #[test]
-fn trunc_fract_floor_ceil() {
-    test(&[
+fn test_trunc_fract_floor_ceil() {
+    test_computation(&[
         ("trunc(1.9)", dec!(1.0)),
         ("trunc 0.9", dec!(0.0)),
         ("trunc 1.9", dec!(1.0)),
@@ -178,8 +179,8 @@ fn trunc_fract_floor_ceil() {
 }
 
 #[test]
-fn sinus() {
-    test(&[
+fn test_sinus() {
+    test_computation(&[
         ("sin(0)", dec!(0.0)),
         ("sin(PI/2)", dec!(1.0)),
         ("sin(3.141592684/2)", dec!(1.0)),
@@ -189,12 +190,12 @@ fn sinus() {
 }
 
 #[test]
-fn ln() {
-    test(&[("ln(E)", dec!(1.0))]);
+fn test_ln() {
+    test_computation(&[("ln(E)", dec!(1.0))]);
 }
 
 #[test]
-fn random() {
+fn test_random() {
     let mut numbers = HashSet::new();
     for _ in 0..10 {
         let mut computer = Calc::default();
@@ -209,13 +210,13 @@ fn random() {
 }
 
 #[test]
-fn random_errors() {
+fn test_random_errors() {
     test_errors(&["random(5)"]);
 }
 
 #[test]
-fn min() {
-    test(&[
+fn test_min() {
+    test_computation(&[
         ("min(pow(5,2))", dec!(25.0)),
         ("min(200,pow(5,2))", dec!(25.0)),
         ("min(200,min(1,min(-2,5)))", dec!(-2.0)),
@@ -229,13 +230,13 @@ fn min() {
 }
 
 #[test]
-fn min_errors() {
+fn test_min_errors() {
     test_errors(&["min2,5", "min * 5", "min"]);
 }
 
 #[test]
-fn max() {
-    test(&[
+fn test_max() {
+    test_computation(&[
         ("max(2,5)", dec!(5.0)),
         ("max(2)", dec!(2.0)),
         ("max2", dec!(2.0)),
@@ -246,26 +247,26 @@ fn max() {
 }
 
 #[test]
-fn log() {
-    test(&[("log(5 ^ 2)", dec!(1.4))]);
+fn test_log() {
+    test_computation(&[("log(5 ^ 2)", dec!(1.4))]);
 }
 
 #[test]
-fn sum() {
-    test(&[("sum(5,10,15)", dec!(30.0))]);
+fn test_sum() {
+    test_computation(&[("sum(5,10,15)", dec!(30.0))]);
 }
 
 #[test]
-fn average() {
-    test(&[("average(10, 2, 38, 23, 38, 23, 21)", dec!(22.1))]);
+fn test_average() {
+    test_computation(&[("average(10, 2, 38, 23, 38, 23, 21)", dec!(22.1))]);
 }
 
 #[test]
-fn median() {
-    test(&[("median(10, 2, 38, 23, 24, 38, 29, 21)", dec!(23.5))]);
+fn test_median() {
+    test_computation(&[("median(10, 2, 38, 23, 24, 38, 29, 21)", dec!(23.5))]);
 }
 
 #[test]
-fn count() {
-    test(&[("count(10, 2, 38, 23, 24, 38, 29, 21)", dec!(8.0))]);
+fn test_count() {
+    test_computation(&[("count(10, 2, 38, 23, 24, 38, 29, 21)", dec!(8.0))]);
 }

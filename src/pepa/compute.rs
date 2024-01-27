@@ -1,10 +1,10 @@
 use itertools::Itertools;
 use rust_decimal::Decimal;
 
+use crate::{ComputeError, Unit};
 use crate::expression::{Expression, ExpressionToken, NumericExpression};
 use crate::functions::Function;
 use crate::utils::flatten_lines;
-use crate::{ComputeError, Unit};
 
 pub(super) fn compute(ex: &Expression) -> Result<NumericExpression, ComputeError> {
     let mut variables = Vec::new();

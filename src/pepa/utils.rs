@@ -1,4 +1,7 @@
 use rust_decimal::Decimal;
+use rust_decimal_macros::dec;
+
+use crate::{Calc, NumericExpression, Unit};
 
 pub(super) fn split_string_by_comma(s: &str) -> Vec<String> {
     let s = s.trim();
@@ -95,7 +98,7 @@ macro_rules! make_abbreviations {
     ($u:expr, $($args:expr),*) => {
         vec![$($args),*]
             .iter()
-            .map(|a| a.to_lowercase())
+            .map(|a| string!(a))
             .map(|a| (a, $u))
             .collect::<HashMap<_, _>>()
     };
@@ -147,4 +150,50 @@ pub(super) fn flatten_lines<T: Clone>(lines: &Vec<Vec<T>>) -> Vec<Vec<T>> {
     }
 
     ret
+}
+
+#[cfg(test)]
+pub fn test_units(test: &str, res: &[(Decimal, Option<Unit>)]) {
+    let mut computer = Calc::default();
+    let statement = computer.compute(test).unwrap();
+
+    if let Err(e) = &statement.expression {
+        panic!("Error in expression: '{:?}': {:?}", test, e);
+    }
+
+    match &statement.result {
+        None => panic!("No result for: '{:?}'", test),
+        Some(Err(e)) => panic!("Error in computation: '{:?}': {:?}", test, e),
+        Some(Ok(n)) => {
+            let t = NumericExpression::with_multiple_units(res.to_vec());
+            let mut ok = true;
+
+            let mut v1 = t.values();
+            let mut v2 = n.values();
+
+            if v1.len() != v2.len() {
+                ok = false;
+            } else {
+                for i in 0..v1.len() {
+                    if v1[i].1 != v2[i].1 {
+                        ok = false;
+                    }
+
+                    let n1 = (v1[i].0 * dec!(100)).round() / dec!(100);
+                    let n2 = (v2[i].0 * dec!(100)).round() / dec!(100);
+
+                    v1[i].0 = n1;
+                    v2[i].0 = n2;
+
+                    if n1 != n2 {
+                        ok = false;
+                    }
+                }
+            }
+
+            if !ok {
+                panic!("{:?}: {:?} != {:?}", test, v1, v2);
+            }
+        }
+    }
 }

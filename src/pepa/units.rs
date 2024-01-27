@@ -3,24 +3,32 @@ use std::collections::HashMap;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
+use crate::{Decimal, string};
 use crate::units_length::LengthUnit;
+use crate::units_mass::MassUnit;
 use crate::units_temperature::TemperatureUnit;
 use crate::units_time::TimeUnit;
-use crate::Decimal;
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Hash)]
 pub enum Unit {
     Temperature(TemperatureUnit),
     Time(TimeUnit),
     Length(LengthUnit),
+    Mass(MassUnit),
+}
+
+pub struct Abbreviations {
+    pub case_sensitive: HashMap<String, Unit>,
+    pub case_insensitive: HashMap<String, Unit>,
 }
 
 impl Unit {
-    fn abbreviations(&self) -> HashMap<String, Unit> {
+    fn abbreviations(&self) -> Abbreviations {
         match self {
             Unit::Temperature(_) => TemperatureUnit::abbreviations(),
             Unit::Time(_) => TimeUnit::abbreviations(),
             Unit::Length(_) => LengthUnit::abbreviations(),
+            Unit::Mass(_) => MassUnit::abbreviations(),
         }
     }
 
@@ -29,7 +37,18 @@ impl Unit {
 
         for u in Unit::iter() {
             let abbreviations = u.abbreviations();
-            if let Some(u) = abbreviations.get(&name.to_lowercase()) {
+            if let Some(u) = abbreviations.case_sensitive.get(&string!(name)) {
+                res.push(*u);
+            }
+        }
+
+        if !res.is_empty() {
+            return res;
+        }
+
+        for u in Unit::iter() {
+            let abbreviations = u.abbreviations();
+            if let Some(u) = abbreviations.case_insensitive.get(&name.to_lowercase()) {
                 res.push(*u);
             }
         }
@@ -55,6 +74,12 @@ impl Unit {
                 }
                 _ => None,
             },
+            Unit::Mass(from) => match to {
+                Unit::Mass(to) => {
+                    Some(v * from.reference_unit_multiplier() / to.reference_unit_multiplier())
+                }
+                _ => None,
+            },
         }
     }
 
@@ -63,6 +88,7 @@ impl Unit {
             Unit::Temperature(t) => t.to_string_with_plural(n),
             Unit::Time(t) => t.to_string_with_plural(n),
             Unit::Length(l) => l.to_string_with_plural(n),
+            Unit::Mass(m) => m.to_string_with_plural(n),
         }
     }
 }

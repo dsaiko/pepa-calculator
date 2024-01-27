@@ -1,4 +1,4 @@
-build: clean codecheck tests
+build: clean codecheck test
 	cargo doc
 	cargo build --release
 

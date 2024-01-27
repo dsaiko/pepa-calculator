@@ -30,8 +30,6 @@ TODO:
 - equations ?
 - > 0 -> bool?
 - division by zero, sin(0), cos(0)
-- lambda + dynamodb
-- protect lambda against ddos
 - localization?
 - config (network, uuid ....)
 - cache - exchange rates etc
@@ -39,21 +37,16 @@ TODO:
 - variable := constant, expression?
 - base64, checksums, hexa, octa, binary....
 - scientific notations?
-- temperature
 - angle
 - fyzikalni tabulky
-- nahodne cisla + rozdeleni
-- nahodne hesla, uuid
-- nahodna slova, vety ...
 - test to number
 - licence GPL???
 - price appl stock in czk
-- comments "//" "#"
 - 5 percent of/from 100
 - 5MB + 3KB
 - min(5 tons, 3 kg)
   https://github.com/simon-whitehead/rust-yard
-  numsolve
+  numsolve?
 - {} ?
   variables: 3A 3*A 3xA
 - matrix?
@@ -69,8 +62,6 @@ TODO:
 - unknown unit
 - min(5celsius, 10, 1celsius)
 - min(5celsius, 10, 1 celsius, 100 km)
-- yards -> km -> m -> mm
-- yards in mm
 - km * km - unit???
 - km * m
 - km * m / hours
@@ -80,11 +71,13 @@ TODO:
 - km * km -> ha???
 - liter, pound
 - gram miligram, pound
--  https://docs.rs/uom/latest/uom/all.html
--  15 km + 1 m
--  15 h + 1m
+- https://docs.rs/uom/latest/uom/all.html
+- 15 km + 1 m
+- 15 h + 1m
 - grain
-- 1 nm + 1 cm + 1 NM
+
 - dag dkg
 - 5 m = ?? min/m
 - localization?
+- sin(55deg) sin(55 rad)
+- tbsp tablespoon

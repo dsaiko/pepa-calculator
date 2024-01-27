@@ -4,7 +4,7 @@ use std::sync::OnceLock;
 use rust_decimal::MathematicalOps;
 use rust_decimal_macros::dec;
 
-use crate::{string, Decimal};
+use crate::{Decimal, string};
 
 #[derive(Debug, Clone)]
 pub struct Function {

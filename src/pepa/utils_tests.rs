@@ -3,7 +3,7 @@ use crate::utils::Pluralize;
 use crate::utils::{flatten_lines, split_string_by_comma};
 
 #[test]
-fn split() {
+fn test_split() {
     assert_eq!(split_string_by_comma("test"), vec!["test"]);
     assert_eq!(
         split_string_by_comma("test1, test2"),
@@ -25,7 +25,7 @@ fn split() {
 }
 
 #[test]
-fn pluralize() {
+fn test_pluralize() {
     assert_eq!(pluralize!("hour", 1), "hour");
     assert_eq!(pluralize!("hour", 0), "hours");
     assert_eq!(pluralize!("hour", -1), "hour");

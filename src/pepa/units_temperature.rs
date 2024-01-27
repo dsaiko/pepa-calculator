@@ -1,9 +1,11 @@
-use rust_decimal_macros::dec;
 use std::collections::HashMap;
+
+use rust_decimal_macros::dec;
+use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::{make_abbreviations, string, Decimal, Unit};
-use strum::IntoEnumIterator;
+use crate::{Decimal, make_abbreviations, string, Unit};
+use crate::units::Abbreviations;
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Default, Hash)]
 pub enum TemperatureUnit {
@@ -14,33 +16,56 @@ pub enum TemperatureUnit {
 }
 
 impl TemperatureUnit {
-    pub fn abbreviations() -> HashMap<String, Unit> {
-        let mut abbreviations = HashMap::new();
+    pub fn abbreviations() -> Abbreviations {
+        let mut case_sensitive = HashMap::new();
+        let mut case_insensitive = HashMap::new();
 
         for t in TemperatureUnit::iter() {
-            abbreviations.extend(match t {
-                TemperatureUnit::DegreesCelsius => make_abbreviations!(
-                    t.to_unit(),
-                    "Celsius",
-                    "°C",
-                    "DegreesCelsius",
-                    "DegreeCelsius"
-                ),
-                TemperatureUnit::DegreesFahrenheit => make_abbreviations!(
-                    t.to_unit(),
-                    "Fahrenheit",
-                    "Fahrenheits",
-                    "°F",
-                    "DegreesFahrenheit",
-                    "DegreeFahrenheit",
-                    "DegreesFahrenheits",
-                    "DegreeFahrenheits"
-                ),
-                TemperatureUnit::Kelvin => make_abbreviations!(t.to_unit(), "Kelvin", "Kelvins"),
-            });
+            match t {
+                TemperatureUnit::DegreesCelsius => {
+                    case_insensitive.extend(make_abbreviations!(
+                        t.to_unit(),
+                        // case insensitive
+                        "°c",
+                        "celsius",
+                        "degreescelsius",
+                        "degreecelsius"
+                    ));
+                }
+                TemperatureUnit::DegreesFahrenheit => {
+                    case_insensitive.extend(make_abbreviations!(
+                        t.to_unit(),
+                        // case insensitive
+                        "°f",
+                        "fahrenheit",
+                        "fahrenheits",
+                        "degreesfahrenheit",
+                        "degreefahrenheit",
+                        "degreesfahrenheits",
+                        "degreefahrenheits"
+                    ));
+                }
+                TemperatureUnit::Kelvin => {
+                    case_sensitive.extend(make_abbreviations!(
+                        t.to_unit(),
+                        // case sensitive
+                        "K"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        t.to_unit(),
+                        // case insensitive
+                        "kelvin",
+                        "kelvins"
+                    ));
+                }
+            };
         }
 
-        abbreviations
+        Abbreviations {
+            case_sensitive,
+            case_insensitive,
+        }
     }
 
     pub fn to_reference_unit(self, v: Decimal) -> Decimal {

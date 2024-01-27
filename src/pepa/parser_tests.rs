@@ -1,7 +1,7 @@
-use pepa::Calc;
+use crate::Calc;
 
 #[test]
-fn explain() {
+fn test_explain() {
     let tests = [
         ("-5 - -1", "-5+1"),
         ("-5 * -1", "-(5*(-1))"),
@@ -53,6 +53,8 @@ fn explain() {
         ),
         ("celsius((33 + 3) kelvins)", "((33+3)→K)→°C"),
         ("10 * celsius(5 + 5)", "10*((5+5)→°C)"),
+        ("(5 Mm + 1000mm) to metres", "(5Mm+1000mm)→m"),
+        ("(1 Mt) in kg", "1Mt→kg"),
     ];
 
     for test in tests {

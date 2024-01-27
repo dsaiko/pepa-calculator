@@ -5,8 +5,9 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::{
-    make_abbreviations, make_abbreviations_with_prefixes, string, Decimal, Unit, UnitPrefix,
+    Decimal, make_abbreviations, make_abbreviations_with_prefixes, string, Unit, UnitPrefix,
 };
+use crate::units::Abbreviations;
 
 #[derive(Debug, Clone, Eq, Copy, PartialEq, EnumIter, Hash)]
 pub enum TimeUnit {
@@ -17,30 +18,81 @@ pub enum TimeUnit {
 }
 
 impl TimeUnit {
-    pub fn abbreviations() -> HashMap<String, Unit> {
-        let mut abbreviations = HashMap::new();
+    pub fn abbreviations() -> Abbreviations {
+        let mut case_sensitive = HashMap::new();
+        let mut case_insensitive = HashMap::new();
 
         for t in TimeUnit::iter() {
-            abbreviations.extend(match t {
+            match t {
                 TimeUnit::Second(_) => {
-                    make_abbreviations_with_prefixes!(
+                    case_sensitive.extend(make_abbreviations_with_prefixes!(
                         TimeUnit::Second,
-                        "s",
+                        // case sensitive
+                        "s"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations_with_prefixes!(
+                        TimeUnit::Second,
+                        // case insensitive
                         "second",
                         "seconds",
                         "sec",
                         "secs"
-                    )
+                    ));
                 }
                 TimeUnit::Minute => {
-                    make_abbreviations!(t.to_unit(), "m", "minute", "minutes", "min", "mins")
+                    case_sensitive.extend(make_abbreviations!(
+                        t.to_unit(),
+                        // case sensitive
+                        "m"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        t.to_unit(),
+                        // case insensitive
+                        "minute",
+                        "minutes",
+                        "min",
+                        "mins"
+                    ));
                 }
-                TimeUnit::Hour => make_abbreviations!(t.to_unit(), "h", "hours", "hour", "hrs"),
-                TimeUnit::Day => make_abbreviations!(t.to_unit(), "d", "day", "days"),
-            });
+                TimeUnit::Hour => {
+                    case_sensitive.extend(make_abbreviations!(
+                        t.to_unit(),
+                        // case sensitive
+                        "h"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        t.to_unit(),
+                        // case insensitive
+                        "hours",
+                        "hour",
+                        "hrs"
+                    ));
+                }
+                TimeUnit::Day => {
+                    case_sensitive.extend(make_abbreviations!(
+                        t.to_unit(),
+                        // case sensitive
+                        "d"
+                    ));
+
+                    case_insensitive.extend(make_abbreviations!(
+                        t.to_unit(),
+                        // case insensitive
+                        "d",
+                        "day",
+                        "days"
+                    ));
+                }
+            };
         }
 
-        abbreviations
+        Abbreviations {
+            case_sensitive,
+            case_insensitive,
+        }
     }
 
     pub fn reference_unit_multiplier(self) -> Decimal {

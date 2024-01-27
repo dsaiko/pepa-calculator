@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::{string, Decimal};
+use crate::{Decimal, string};
 
 #[derive(Debug, Clone)]
 pub struct Generator {
