@@ -1,7 +1,7 @@
 use rust_decimal_macros::dec;
 
+use crate::units::unit::test_units;
 use crate::units::{Time, Unit};
-use crate::utils::test_units;
 
 #[test]
 fn test_time() {

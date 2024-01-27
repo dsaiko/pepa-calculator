@@ -6,6 +6,9 @@ pub use self::time::Time;
 pub use self::unit::Abbreviations;
 pub use self::unit::Unit;
 
+mod angle;
+#[cfg(test)]
+mod angle_tests;
 mod length;
 #[cfg(test)]
 mod length_tests;

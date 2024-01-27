@@ -55,6 +55,7 @@ fn test_explain() {
         ("10 * celsius(5 + 5)", "10*((5+5)→°C)"),
         ("(5 Mm + 1000mm) to metres", "(5Mm+1000mm)→m"),
         ("(1 Mt) in kg", "1Mt→kg"),
+        ("(1 degree) in gradians", "1°→gon"),
     ];
 
     for test in tests {
