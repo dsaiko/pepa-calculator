@@ -5,6 +5,7 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::units::angle::Angle;
+use crate::units::volume::Volume;
 use crate::units::{Length, Mass, Temperature, Time};
 use crate::{string, Calculator, Decimal, NumericExpression};
 
@@ -15,11 +16,16 @@ pub enum Unit {
     Length(Length),
     Mass(Mass),
     Angle(Angle),
+    Volume(Volume),
 }
 
 pub struct Abbreviations {
     pub case_sensitive: HashMap<String, Unit>,
     pub case_insensitive: HashMap<String, Unit>,
+}
+
+trait UnitDefinition {
+    fn abbreviations() -> Abbreviations; TODO
 }
 
 impl Unit {
@@ -30,6 +36,7 @@ impl Unit {
             Unit::Length(_) => Length::abbreviations(),
             Unit::Mass(_) => Mass::abbreviations(),
             Unit::Angle(_) => Angle::abbreviations(),
+            Unit::Volume(_) => Volume::abbreviations(),
         }
     }
 
@@ -87,6 +94,12 @@ impl Unit {
                 }
                 _ => None,
             },
+            Unit::Volume(from) => match to {
+                Unit::Volume(to) => {
+                    Some(v * from.reference_unit_multiplier() / to.reference_unit_multiplier())
+                }
+                _ => None,
+            },
         }
     }
 
@@ -97,6 +110,7 @@ impl Unit {
             Unit::Length(l) => l.to_string_with_plural(n),
             Unit::Mass(m) => m.to_string_with_plural(n),
             Unit::Angle(a) => a.to_string_with_plural(n),
+            Unit::Volume(a) => a.to_string_with_plural(n),
         }
     }
 }

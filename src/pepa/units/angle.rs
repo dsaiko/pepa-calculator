@@ -75,6 +75,8 @@ impl Angle {
                         "gons",
                         "grad",
                         "grads",
+                        "grade",
+                        "grades",
                         "gradian",
                         "gradians"
                     ));
